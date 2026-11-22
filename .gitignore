@@ -1,0 +1,17 @@
+# Independent repositories
+/therblig-vla/
+/vla-harness/
+
+# Workspace data and local configuration
+/datasets/
+/outputs/
+/baselines/
+/checkpoints/
+/external/
+/configs/local.json
+
+# Python environments and caches
+.venv*/
+__pycache__/
+*.py[cod]
+.pytest_cache/
