@@ -15,3 +15,6 @@
 __pycache__/
 *.py[cod]
 .pytest_cache/
+
+# Local planning notes (not versioned)
+.claude/plan/
