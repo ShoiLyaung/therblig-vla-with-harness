@@ -200,6 +200,14 @@ S2 → S1 → S0       派发蓝杯 B，forbidden_targets 包含 R
 
 在同一红杯阶段，Monitor 先处理含 eR、较晚 valid_until 的刷新，再收到尚无 execution_id 的较早快照。保留 eR 与较晚租约，宽限不重置。若此后连续漏收刷新，租约到期时移除红杯子句，转回 BASELINE。同一快照的有效续租抵达，核验签发者、作用域、摘要、代际及资源未释放后重新布防，沿用原宽限历史。对照分支：若 REVOKE 已到，或 S0 保护 epoch 已从 3 推进至 4，迟到的刷新即使带更晚的 valid_until 也被丢弃，旧目标不能复活。
 
+| 红杯阶段的续租分支 | Monitor 的判断与可见结果 |
+|---|---|
+| 租约到期后尚无刷新 | 空窗本身不触发 Event；仍运行基线，保留历史阶段定位。 |
+| 同一快照及时续租，原已 ARMED 的力子句缺输入 | 重装判 LOST，先 SOFT_HOLD，再发 monitor/clause_coverage_lost。 |
+| 同一快照续租时力流已恢复，但必需力子句从未布防且原宽限已过 | 立即 GRACE_EXPIRED，先 SOFT_HOLD，再发 monitor/required_clause_unarmed。两种保护均为 CANCEL_AFFECTED。 |
+| 到期记录已回收，S2 再发同一快照 | 本次启动内，原 issued_at 早于水位且无匹配记录，故丢弃刷新，只保留基线。同域较晚签发阶段的回收也能挡住更早签发、从未送达的存活阶段。Monitor 重启清空水位后，两种阶段只要仍存活，合格的新鲜刷新即可按首发重新安装，以新的本地布防历史计宽限。 |
+| REVOKE → Monitor 重启 → 收到重启前延迟的刷新 | 新实例不恢复撤销记录；该包的 sent_at 映射值早于本地启动时刻减时钟误差上界，启动围栏将其丢弃。 |
+
 ## W3 两臂并行打开抽屉并放入物品
 
 目标是打开抽屉 `D` 并将物品 `I` 放入。左手执行开抽屉的 `Use` 封装技能，右手在独立工作区先接近再获取。
@@ -348,9 +356,11 @@ Monitor → S2       给出保护范围；核心查询返回现时所有权与�
 
 实机档案修订 3 的惯性与足接触路径均未就绪；Resolver 阻止行走。若 Monitor 单独收到依赖该路径的测试简报，则是 UNSUPPORTED 或 PENDING_INPUT，不能报告 LOST。
 
-[行走简报](../../vla-harness/contracts/v1/examples/monitoring-brief.locomote.json)沿用修订 3 的资源布局，观测与操作策略来自独立的仿真部署。该夹具的 `sim.walk.support@1` 初始取得 `sim.walk.body.imu` 与 `sim.walk.body.foot_contact` 的有效样本（证据 `sim.walk.support.available`），姿态子句进入 ARMED。随后足接触样本失效（`sim.walk.support.lost`），其余流仍可用；先请求 SLOW，再发[覆盖丢失中断](../../vla-harness/contracts/v1/examples/event.required-clause-coverage-lost.json)，以 inv.walk 定位，处置 CANCEL_AFFECTED。此部署不授予实机支撑资格。
+[行走简报](../../vla-harness/contracts/v1/examples/monitoring-brief.locomote.json)沿用修订 3 的资源布局，观测与操作策略来自独立的仿真部署。仿真专用运动包络 `simulation_only.walk.corridor@1` 与 `sim.walk.support@1` 只能用于该仿真部署。姿态子句先取得 `sim.walk.body.imu` 与 `sim.walk.body.foot_contact` 的有效样本（证据 `sim.walk.support.available`），进入 ARMED。随后足接触样本失效（`sim.walk.support.lost`），其余流仍可用；先请求 SLOW，再发[覆盖丢失中断](../../vla-harness/contracts/v1/examples/event.required-clause-coverage-lost.json)，以 inv.walk 定位，处置 CANCEL_AFFECTED。此部署不授予实机支撑资格。
 
-与停稳行分开核对两个基线分支：[行走中租约到期跌倒](../../vla-harness/contracts/v1/examples/event.baseline-fall-unknown-intent.json)发生在行走尚未结束时，意图 UNKNOWN，先前刷新已给出 exec.walk。另在[空闲跌倒](../../vla-harness/contracts/v1/examples/event.baseline-fall-idle.json)中，无已知执行和阶段；硬规则直达 S0，带 CANCEL_AFFECTED 的中断按资源封住重叠待派项，再以 S0 实际保护回执核对所有者和执行。Monitor 重启到首次有效刷新前同样运行基线。并行行走和抓取仍是未来授权用例。
+与停稳行分开核对两个基线分支：[行走中租约到期跌倒](../../vla-harness/contracts/v1/examples/event.baseline-fall-unknown-intent.json)发生在行走尚未结束时，意图 UNKNOWN，先前刷新已给出 exec.walk，保留的 brief.walk 记录用于 phase_contexts 定位。另在[空闲跌倒](../../vla-harness/contracts/v1/examples/event.baseline-fall-idle.json)中，无已知执行和阶段；该独立空闲试验没有简报记录，硬规则直达 S0。S2 暂停该身体待派队列，按 S0 回执实际范围封住重叠项并核对所有者和执行。
+
+仿真行走阶段仍存活 → Monitor 重启，本地阶段记录为空且尚不知执行句柄 → 首次刷新前命中跌倒基线。尽管身体仍在行走，Monitor 可发双空中断，标记 UNKNOWN 并向 S0 请求保护。S2 先冻结该身体待派队列，取得 S0 回执后才依实际资源与当前所有权选择受影响的执行和 outbox 项。与此独立，若首份合格刷新在 S0 推进保护代际前到达，Monitor 按首发重新安装该存活阶段，建立新的本地布防历史；随后代际推进即结束旧阶段。若保护代际先推进，旧简报被拒绝。双空依据是 Monitor 的本地记录与句柄均为空，不以身体静止为条件。并行行走和抓取仍是未来授权用例。
 
 ## 对账与回放检查
 

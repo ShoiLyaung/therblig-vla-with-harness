@@ -24,13 +24,13 @@
 │ Agent Host (Codex / DSH / Custom Agent)        │
 │                 ⇅                              │
 │ Host Adapter · Integration Boundary            │
-│                 ⇅                              │  states
-│ vla-harness · Orchestration / Execution        │ & events┌───────────────────────┐
+│                 ⇅                              │
+│ vla-harness · Orchestration / Execution        │         ┌───────────────────────┐
 │   Planner (LangGraph Agent Loop)               │◄────────┤ Real-time Event       │
-│     ⇅ Foundation Model (reasoning backend)     │interrupt│ Monitor               │
+│     ⇅ Foundation Model (reasoning backend)     │观测/中断│ Monitor               │
 │   Context Manager · Memory · Verifier          │         │                       │
 │   Tool Interface · Policy Registry             │         │                       │
-│   Executor                                     │         │ lightweight VLM       │
+│   Executor                   阶段简报／周期刷新│────────►│ lightweight VLM       │
 └────────────────────────────────────────────────┘         │ + rule detectors      │
    ⇅ policy-interface-protocol       ┊                     │ safety rules          │
 ┌───────────────────────────────┐    ┊                     │                       │
@@ -56,11 +56,11 @@
 
 图中向下传递任务与控制目标，向上返回观测、执行状态，形成闭环。System 2 由 `vla-harness` 与其调用的基础模型构成：Harness 内的 Planner 以 LangGraph 风格的 Agent Loop 负责任务分解与重规划，基础模型作为可替换的推理后端；Codex、DSH 等宿主只通过 Adapter 接入。`therblig-vla` 是 System 1 的一种可替换实现，其他策略通过适配器接入同一协议。
 
-三个 System 之外并行运行一个 **Real-time event monitor**（本地轻量 VLM 和/或规则检测器），高频观察 User、Robot body 与 Physical world。S2 经它获取身体与环境的状态和事件；safety rules 驻留在 monitor 中，触发时一方面直接让 S0 立即做出保护动作（如停止、减速），不等待 S2；另一方面向 S2 发出 interrupt，由 S2 取消当前调用并重规划，期间 S0 保持身体稳定。S2 还可经 Tool interface 对 S0 发起 optional direct call，仅限有界的模式请求（如保持、减速、停止、切换控制模式）。另外，实际机器人控制有实时性要求。System 2 负责高层规划、监控和重规划；System 1 负责低延迟策略推理与动作序列执行；System 0 负责设备驱动与本地实时控制。LLM 推理延迟不应直接决定底层控制周期。
+三个 System 之外并行运行一个 **Real-time event monitor**（本地轻量 VLM 和/或规则检测器），高频观察 User、Robot body 与 Physical world。S2 经它获取用户、身体与环境的观测数据；safety rules 驻留在 monitor 中，触发时一方面直接让 S0 立即做出保护动作（如停止、减速），不等待 S2；另一方面向 S2 发出 interrupt，由 S2 取消当前调用并重规划，期间 S0 保持身体稳定。S2 还可经 Tool interface 对 S0 发起 optional direct call，仅限有界的模式请求（如保持、减速、停止、切换控制模式）。另外，实际机器人控制有实时性要求。System 2 负责高层规划、监控和重规划；System 1 负责低延迟策略推理与动作序列执行；System 0 负责设备驱动与本地实时控制。LLM 推理延迟不应直接决定底层控制周期。
 
 # 两个仓库的职责边界
 
-技能调用主路径为 **S2 ⇄ S1 ⇄ S0**：向下委托目标或提交控制目标，向上反馈观测、运行状态与证据。旁路有三条：Monitor → S2 的状态、事件与 interrupt，Monitor → S0 按 safety rules 触发的即时保护，以及 S2 → S0 的 optional direct call。
+技能调用主路径为 **S2 ⇄ S1 ⇄ S0**：向下委托目标或提交控制目标，向上反馈观测、运行状态与证据。旁路有四条：S2 → Monitor 的阶段简报，Monitor → S2 的观测数据与 interrupt，Monitor → S0 按 safety rules 触发的即时保护，以及 S2 → S0 的 optional direct call。
 
 | 层或组件 | 负责 | 边界 |
 |---|---|---|
@@ -68,7 +68,7 @@
 | S2：Harness Core | Planner（LangGraph Agent Loop：理解目标、分解任务、选择下一步、恢复与重规划）、Context、Policy Registry、Resolver、工具调用、执行协调、Memory 与任务验证。 | 调用基础模型作推理后端；不承担模型训练，不参与机器人高频控制。 |
 | S1：策略服务 | 根据观测推理动作，在委托子任务内执行策略或局部技能组合，检查局部条件并返回结果和证据。 | 不改变上层目标，不接管任务级编排。 |
 | S0：Controller / Driver | 设备驱动、本地实时控制、实测状态反馈、控制限位及本地保护；可受理 S2 的有界模式请求，以及 monitor 按 safety rules 触发的即时保护。 | 控制与保护不能等待 S2 的网络请求或 LLM 推理完成；保留最终控制权。 |
-| Real-time event monitor | 高频观察 User、Robot body 与 Physical world；向 S2 提供状态与事件，按 safety rules 直接触发 S0 即时保护，并向 S2 发出 interrupt。 | 位于三个 System 之外，不被调用即可发信号；不进入任务级规划。 |
+| Real-time event monitor | 高频观察 User、Robot body 与 Physical world；按 safety rules 直接触发 S0 即时保护。向 S2 提供观测数据，需要重新评估时发出 interrupt；不确认简报，不报告自身监测状态。 | 位于三个 System 之外，不被调用即可发信号；不进入任务级规划。 |
 
 `therblig-vla` 同时提供可导入的研究组件和独立运行时；其他 VLA、程序策略或独立服务可在满足契约后替换它。通用的 `vla-harness` 不负责训练具体 VLA。
 

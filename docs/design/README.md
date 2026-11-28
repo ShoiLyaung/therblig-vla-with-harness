@@ -187,6 +187,7 @@ S2 确认旧调用无法继续产生冲突指令，再按实测结果选择后�
 | 对机构做连续操作 | [封装能力](../../vla-harness/contracts/v1/examples/capability.open-drawer.json) | 一次受理的内部组合和接触退出态 |
 | 展开上层目标 | [可展开能力](../../vla-harness/contracts/v1/examples/capability.assemble-goal.json) | 子目标、依赖关系与组合效果 |
 | 阶段开始与刷新 | [首发](../../vla-harness/contracts/v1/examples/monitoring-brief.acquire.json)、[刷新](../../vla-harness/contracts/v1/examples/monitoring-brief.refresh-with-execution.json) | 同 ID 和内容摘要，补执行句柄及租约 |
+| 空闲跌倒 | [无阶段基线中断](../../vla-harness/contracts/v1/examples/event.baseline-fall-idle.json) | Event 只标 L；S2 按 S0 保护回执的实际范围封住待派项，回执缺失时先隔离该身体。 |
 | 宽限到期 | [未布防中断](../../vla-harness/contracts/v1/examples/event.required-clause-unarmed-grace-expired.json) | 先收紧，无执行句柄时按调用定位 |
 | 普通话语 | [新增请求观测](../../vla-harness/contracts/v1/examples/observation.utterance-new-request.json) | 持久游标保存，S2 决定是否追加任务 |
 | 发起结构化调用 | [红杯调用](../../vla-harness/contracts/v1/examples/invocation.pick-red-cup.json) | 禁止目标、实体锚定和预期保护代际 |
@@ -286,11 +287,13 @@ S0 按轨做原子准入，检查同轴别名、耦合域和实际支持状态�
 | 语义上限 | 仅允许 SLOW 更保守，但错物接触可能需保持；推荐经规则层确认最多 SOFT_HOLD。 |
 | 人员交接 | 可暂不支持近人操作；推荐预先独立批准操作 profile，经 SWITCH_PROFILE 受理后仅可进一步收紧。当前档案未授权。 |
 
-待议：语义层做任务理解时是否需要预期效果等阶段意图。本轮用子句和可选 capability_ref 表达，不新增 intent 块。根 README 的“状态与事件”及图中方向仍按旧表述，待裁决后统一。
+待议：语义层做任务理解时是否需要预期效果等阶段意图。本轮用子句和可选 capability_ref 表达，不新增 intent 块。
 
-无已知执行及阶段时，基线硬规则仍可发中断：意图 UNKNOWN、确定性 RULE、已登记基线规则、无失败子句、有关联保护且资源非空。S2 按身体与资源封住重叠待派项，并以 S0 回执对账。阶段相关中断继续要求可定位依据。
+基线规则采用 `baseline/<name>@<major>`。仅无任何本地阶段记录且无已知执行时允许双空中断；保留期内的到期阶段仍用 phase_contexts 定位，意图 UNKNOWN。S2 依据 S0 回执的实际保护范围隔离待派项。
 
-本轮细化原计划的到期语义：到期仅撤下本地子句并返回 BASELINE。周期刷新重新送达后，同一快照可在认证、范围、代际、租约及本地释放检查通过后重新安装，沿用本 attempt 的宽限历史。只有终止围栏进入 ENDED。
+到期静默回到 BASELINE，保留期内有效续租重装。曾 ARMED 而输入消失记 LOST；从未布防且原宽限耗尽即 GRACE_EXPIRED。回收推进本次启动内的签发时间水位，无记录且早于水位的简报在本次启动内不能重新取得宽限。
+
+残余风险：Monitor 重启以投递 sent_at 与本地启动时刻的误差界建立启动围栏，不持久化 END／REVOKE。误差带内的重启前迟到包仍可能通过；撤销丢失的旧意图受租约限制。本次 Monitor 启动内，水位可阻止已被回收的存活阶段恢复，也可能因较晚签发阶段先被回收而挡住较早签发、从未送达的存活阶段。两者在本次启动内只剩基线；重启清空水位后，任何仍存活的阶段可由合格的新鲜刷新重新安装，建立新的本地布防历史。
 
 ### D10 · 保护等级
 
