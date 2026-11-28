@@ -127,8 +127,8 @@ therblig-vla / OpenVLA / Custom Policy
 
 2026-11-29 起 `vla-harness` 更名为 `policy-harness`；此前提交信息中的旧名指同一仓库。
 
-以下为执行型能力的候选 HTTP/JSON 接口。
-预测接口、monitor 事件和 S2→S0 有界模式请求已裁决为同一契约版本内的可选 profile（`prediction`、`monitor-events`、`body-modes`）；任务与持久记忆归 S2，S1 只接收调用切片；执行、取消、可知状态和验证结果各自演进。HTTP 操作在评审通过后再绑定，见[决策登记](docs/design/README.md#决策登记)。
+下表列出核心 HTTP/JSON 接口和预测提案。
+预测接口、monitor 事件和 S2→S0 有界模式请求已裁决为同一契约版本内的可选 profile（`prediction`、`monitor-events`、`body-modes`）；任务与持久记忆归 S2，S1 只接收调用切片；执行、取消、可知状态和验证结果各自演进。`core-execution` 已绑定（v1.0-alpha），其余 profile 按需绑定，见[决策登记](docs/design/README.md#决策登记)。
 
 | 端点 | 用途 |
 |---|---|
@@ -137,7 +137,8 @@ therblig-vla / OpenVLA / Custom Policy
 | `POST /v1/executions` | 携带协议版本、任务标识、能力标识、参数及超时与安全约束，申请执行。受理后保存服务返回的 `execution_id`。 |
 | `GET /v1/executions/{id}` | 取得进度、终态、结果及观测证据。查询超时后按原句柄对账，再决定是否重试。 |
 | `POST /v1/executions/{id}/cancel` | 请求停止。冲突的下一步须等本地运行时确认停止、释放相应资源后再派发。 |
-| `POST /v1/predictions` | 仅返回预测动作。 |
+| `GET /v1/invocations/{invocation_id}` | 创建回执丢失时按原调用查询权威账本及身体证据。 |
+| `POST /v1/predictions`（待绑定） | 仅返回预测动作。 |
 
 观测携带采集时间和来源，空间量注明参考系及单位。S1 根据本地观测更新动作目标，S0 负责伺服与限幅。S2 的 Executor 跟踪调用，Verifier 根据观测判定效果。例如，目标是拿起红杯，执行已结束而相机仍看见红杯留在桌上，效果判为失败。若桌面被遮挡且缺乏其他证据，效果记为未知。
 

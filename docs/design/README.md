@@ -172,7 +172,7 @@ S2 确认旧调用无法继续产生冲突指令，再按实测结果选择后�
 
 - 总仓记录设计评审结论、复现场景及跨层依赖。
 - 策略仓的 catalog revision 决定标注码、能力资源与动作掩码的来源。
-- 协议独立版本化，双方验证协商形状。HTTP 操作首次绑定到 `openapi.yaml` 并正式发布前，`1.0.0` 是可原位修订的草案。发布后新增字段须协商新 minor；依赖新版身体元数据的能力不向旧形状的对端派发。
+- 协议独立版本化，双方验证协商形状。核心 HTTP 操作见 `openapi.yaml` 的 v1.0-alpha 绑定。发布后新增字段须协商新 minor；依赖新版身体元数据的能力不向旧形状的对端派发。
 - BodyProfile revision 决定抽象资源到轴、传感器和控制模式的映射。
 - 推理模型版本与 capability revision 都随执行记录保留。
 - 对账或轨迹回收时必须能找到当时的版本，避免用新目录重解释旧动作。
@@ -201,7 +201,7 @@ S2 确认旧调用无法继续产生冲突指令，再按实测结果选择后�
 `core-execution` 是基本互通面。
 `prediction`、`body-modes` 和 `monitor-events` 可各自声明支持范围。
 本地保护语义独立于 S2 事件流的传输选择。
-HTTP 操作在评审通过后再绑定。[OpenAPI 占位文件](../../policy-harness/contracts/v1/openapi.yaml)
+`core-execution` 已绑定（v1.0-alpha），其余 profile 按需绑定。[OpenAPI 契约](../../policy-harness/contracts/v1/openapi.yaml)
 
 ## 决策登记
 
