@@ -126,7 +126,7 @@ therblig-vla / OpenVLA / Custom Policy
 ## 跨仓调用
 
 以下为执行型能力的候选 HTTP/JSON 接口。
-公共预测接口、跨仓 Context 与 Memory 的范围、详细状态枚举、monitor 事件，以及 S2→S0 direct call 的接口形态和协议归属均待裁决。
+预测接口、monitor 事件和 S2→S0 有界模式请求已裁决为同一契约版本内的可选 profile（`prediction`、`monitor-events`、`body-modes`）；任务与持久记忆归 S2，S1 只接收调用切片；执行、取消、可知状态和验证结果各自演进。HTTP 操作在评审通过后再绑定，见[决策登记](docs/design/README.md#决策登记)。
 
 | 端点 | 用途 |
 |---|---|
