@@ -7,12 +7,12 @@ from pathlib import Path
 import yaml
 from jsonschema import Draft202012Validator
 
-root = Path(sys.argv[1]).resolve()
-vla = root / "policy-harness"
+root = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else Path(__file__).resolve().parents[2]
+harness = root / "policy-harness"
 provider = root / "therblig-vla"
-contracts = vla / "contracts/v1"
+contracts = harness / "contracts/v1"
 catalog_dir = provider / "therbligs"
-sys.path.insert(0, str(vla / "tests/contract"))
+sys.path.insert(0, str(harness / "tests/contract"))
 from evidence_rules import (
     bound_primary,
     bp,
@@ -153,7 +153,7 @@ active_files = [
     root / "README.md",
     root / "docs/brief.md",
     *sorted((root / "docs/design").glob("*.md")),
-    *sorted((vla / "docs").glob("*.md")),
+    *sorted((harness / "docs").glob("*.md")),
     *sorted((provider / "docs").glob("*.md")),
     *sorted((contracts / "schemas").glob("*.json")),
     *sorted((contracts / "examples").glob("*.json")),
@@ -205,7 +205,7 @@ oldpins = [
 
 for p in active_files:
     assert not any(old in p.read_text() for old in (*oldpins, "generic/contact_evidence_available@1")), p
-for p in [*sorted((contracts / "schemas").glob("*.json")), *sorted((vla / "docs").glob("*.md"))]:
+for p in [*sorted((contracts / "schemas").glob("*.json")), *sorted((harness / "docs").glob("*.md"))]:
     assert not re.search(
         r"therblig|transport.?(loaded|empty)|pre.?position|disassembl|unavoidable|avoidable|fatigue|Inspire|RH56|Correll|因时",
         p.read_text(),

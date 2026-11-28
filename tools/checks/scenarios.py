@@ -3,6 +3,7 @@ import json
 import math
 import re
 import subprocess
+import sys
 from collections import Counter
 from graphlib import TopologicalSorter
 from pathlib import Path
@@ -11,14 +12,16 @@ from urllib.parse import unquote, urlsplit
 import yaml
 from jsonschema import Draft202012Validator as V
 
-P = Path("docs/design/scenarios")
-D = Path(__file__).resolve().parent
+root = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else Path(__file__).resolve().parents[2]
+P = root / "docs/design/scenarios"
 tracks = "E LA RA LH RH W L S2 MON".split()
 components = (
     "Planner Context Memory ToolInterface Resolver Executor Verifier S1 S0 Monitor Protocol BodyProfile".split()
 )
 percepts = "头部视觉 关节位姿 手部轴向计数 电流代理 深度 点云 语音 惯性 足接触 液位与溢出 材料损伤 接收者承载 柔性地标 接口就位与扭矩 可读标签 动态目标轨迹 外部载荷与张力 工作区可见范围".split()
-codes = [r["code"] for r in yaml.safe_load(Path("therblig-vla/therbligs/catalog.v0.yaml").read_text())["rows"]]
+codes = [
+    r["code"] for r in yaml.safe_load((root / "therblig-vla/therbligs/catalog.v0.yaml").read_text())["rows"]
+]
 statuses = ["已覆盖", "需要但被阻塞", "不涉及"]
 ok, blocked, na = statuses
 
@@ -55,7 +58,7 @@ cases = [load(f) for f in sorted((P / "cases").glob("*.yaml"))]
 pins = cases[0]["baseline_refs"]
 for key, repo in [("root", "."), ("harness", "policy-harness"), ("provider", "therblig-vla")]:
     for rev in {case["baseline_refs"][key] for case in cases}:
-        subprocess.run(["git", "-C", repo, "cat-file", "-e", rev + "^{commit}"], check=True)
+        subprocess.run(["git", "-C", root / repo, "cat-file", "-e", rev + "^{commit}"], check=True)
 import subprocess
 from functools import lru_cache
 from pathlib import Path
@@ -66,7 +69,7 @@ from referencing import Registry, Resource
 
 @lru_cache(maxsize=None)
 def pinned(repo, rev, path):
-    return subprocess.check_output(["git", "-C", repo, "show", rev + ":" + path], text=True)
+    return subprocess.check_output(["git", "-C", root / repo, "show", rev + ":" + path], text=True)
 
 
 def contract_data():
@@ -77,7 +80,7 @@ def contract_data():
         return json.loads(pinned(repo, rev, "contracts/v1/" + path))
 
     names = subprocess.check_output(
-        ["git", "-C", repo, "ls-tree", "--name-only", rev + ":contracts/v1/schemas"], text=True
+        ["git", "-C", root / repo, "ls-tree", "--name-only", rev + ":contracts/v1/schemas"], text=True
     ).splitlines()
     schemas = [read("schemas/" + n) for n in names if n.endswith(".json")]
     registry = Registry().with_resources((s["$id"], Resource.from_contents(s)) for s in schemas)
@@ -353,8 +356,8 @@ assert catalog["catalog_revision"] == pins["catalog"] and catalog["body_profile"
 edir = "policy-harness/contracts/v1/examples/"
 catalogue = "therblig-vla/therbligs/catalog.v0.yaml"
 published = {
-    json.loads(f.read_text())["capability_id"].split(".")[-1]: str(f)
-    for f in Path(edir).glob("capability.*.json")
+    json.loads(f.read_text())["capability_id"].split(".")[-1]: str(f.relative_to(root))
+    for f in (root / edir).glob("capability.*.json")
 }
 mrmap = [
     "baseline/fall@1（其他危险依部署登记的基线硬规则）",
@@ -457,7 +460,7 @@ assert [x["scenario_id"] for x in cases] == wanted
 allg = set()
 allmr = set()
 allobj = set()
-schemas = Path("policy-harness/contracts/v1/schemas")
+schemas = root / "policy-harness/contracts/v1/schemas"
 o_names = {"ModeRequest": "mode-request", "BodyProfile": "body-profile"}
 
 
@@ -602,15 +605,15 @@ for v in cases:
             "access"
         ] == "TAKEOVER"
     if n <= 4:
-        target(Path("entry"), v["extends_walkthrough"])
+        target(root / "entry", v["extends_walkthrough"])
         assert "#" + walks[n - 1] in md
     for f in v["evidence_refs"]:
-        assert Path(f).is_file()
+        assert (root / f).is_file()
     for k in v["capabilities"]:
         ref = k["reference"]
         name = k["name"]
         if k["status"] != "需新建":
-            assert Path(ref).is_file()
+            assert (root / ref).is_file()
         if k["status"] == "已有卡":
             assert published[name] == ref
         if k["status"] == "目录模板":
@@ -786,9 +789,9 @@ print(
 def allmd():
     for d in [".", "policy-harness", "therblig-vla"]:
         names = subprocess.check_output(
-            ["git", "-C", d, "ls-files", "-co", "--exclude-standard"], text=True
+            ["git", "-C", root / d, "ls-files", "-co", "--exclude-standard"], text=True
         ).splitlines()
-        yield from [Path(d) / n for n in names if n.endswith(".md")]
+        yield from [root / d / n for n in names if n.endswith(".md")]
 
 
 lcount = 0
@@ -800,7 +803,7 @@ badnumbers = re.compile(r"\b\d+(?:\.\d+)?\s*(?:Hz|kHz|ms|N\b|N·m|秒|毫秒|牛
 assert not any(badnumbers.search(p.read_text()) for p in P.rglob("*") if p.is_file())
 assert not re.search(
     r"therblig|transport.?(loaded|empty)|pre.?position|disassembl|unavoidable|avoidable|fatigue|Inspire|RH56|Correll|Unitree|Qwen|OpenVLA",
-    Path("policy-harness/docs/harness-design.md").read_text(),
+    (root / "policy-harness/docs/harness-design.md").read_text(),
     re.I,
 )
 print("PASS", lcount, "relative links with anchors")

@@ -25,7 +25,7 @@
 │                 ⇅                              │
 │ Host Adapter · Integration Boundary            │
 │                 ⇅                              │
-│ policy-harness · Orchestration / Execution        │         ┌───────────────────────┐
+│ policy-harness · Orchestration / Execution     │         ┌───────────────────────┐
 │   Planner (LangGraph Agent Loop)               │◄────────┤ Real-time Event       │
 │     ⇅ Foundation Model (reasoning backend)     │观测/中断│ Monitor               │
 │   Context Manager · Memory · Verifier          │         │                       │

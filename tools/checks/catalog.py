@@ -6,7 +6,7 @@ from pathlib import Path
 import yaml
 from jsonschema import Draft202012Validator as V
 
-root = Path(sys.argv[1]).resolve()
+root = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else Path(__file__).resolve().parents[2]
 contracts = root / "policy-harness/contracts/v1"
 sd = contracts / "schemas"
 ed = contracts / "examples"

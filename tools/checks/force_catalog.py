@@ -10,10 +10,10 @@ from jsonschema import Draft202012Validator, FormatChecker
 from jsonschema_specifications import REGISTRY as META
 from referencing import Registry, Resource
 
-root = Path(sys.argv[1]).resolve()
-vla = root / "policy-harness"
+root = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else Path(__file__).resolve().parents[2]
+harness = root / "policy-harness"
 provider = root / "therblig-vla"
-contracts = vla / "contracts/v1"
+contracts = harness / "contracts/v1"
 catalog_dir = provider / "therbligs"
 
 
