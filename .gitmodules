@@ -1,0 +1,6 @@
+[submodule "policy-harness"]
+	path = policy-harness
+	url = https://github.com/ShoiLyaung/policy-harness.git
+[submodule "therblig-vla"]
+	path = therblig-vla
+	url = https://github.com/ShoiLyaung/therblig-vla.git
