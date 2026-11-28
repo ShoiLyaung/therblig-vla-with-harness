@@ -227,11 +227,11 @@ capabilities:
   requirements: 入口：目标已定位、禁选物新鲜且空手路径获准。退出检查：到位且杯未动；入口：有空手与清空路径证据。退出检查：架位稳定且手已清空
 - name: acquire_object
   status: 已有卡
-  reference: vla-harness/contracts/v1/examples/capability.acquire-object.json
+  reference: policy-harness/contracts/v1/examples/capability.acquire-object.json
   requirements: 入口：已到预抓位且身份一致、hand.acquire_slow 可用。退出检查：身份与相对运动同证
 - name: move_payload
   status: 已有卡
-  reference: vla-harness/contracts/v1/examples/capability.move-payload.json
+  reference: policy-harness/contracts/v1/examples/capability.move-payload.json
   requirements: 入口：右手保持令牌有效且搬运组合已核准。退出检查：杯离桌并随臂移动
 - name: stage_for_next_use
   status: 目录模板
@@ -492,13 +492,13 @@ test_vectors:
   - first: changed
     then: replan
 evidence_refs:
-- vla-harness/contracts/v1/examples/invocation.pick-red-cup.json
-- vla-harness/contracts/v1/examples/execution.running.json
-- vla-harness/contracts/v1/examples/capability.acquire-object.json
-- vla-harness/contracts/v1/examples/verification.unknown-occluded.json
-- vla-harness/contracts/v1/examples/body-profile.g1-inspire.json
-- vla-harness/contracts/v1/examples/clause-kind.motion-envelope.json
-- vla-harness/contracts/v1/examples/event.required-clause-unarmed-grace-expired.json
+- policy-harness/contracts/v1/examples/invocation.pick-red-cup.json
+- policy-harness/contracts/v1/examples/execution.running.json
+- policy-harness/contracts/v1/examples/capability.acquire-object.json
+- policy-harness/contracts/v1/examples/verification.unknown-occluded.json
+- policy-harness/contracts/v1/examples/body-profile.g1-inspire.json
+- policy-harness/contracts/v1/examples/clause-kind.motion-envelope.json
+- policy-harness/contracts/v1/examples/event.required-clause-unarmed-grace-expired.json
 protocol_checks:
 - object: Invocation
   fields: [invocation_id, start_deadline]

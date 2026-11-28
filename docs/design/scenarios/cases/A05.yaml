@@ -247,15 +247,15 @@ dag:
 capabilities:
 - name: s2.expand
   status: 内部节点
-  reference: vla-harness/docs/harness-design.md
+  reference: policy-harness/docs/harness-design.md
   requirements: 入口：任务修订、目标杯与液位标准已确认。退出检查：目标杯与液位标准已绑定；入口：已至杯旁，液位与溢出观测路径已按本变体验证。退出检查：液位标准、杯口与壶嘴已绑定
 - name: acquire_object
   status: 已有卡
-  reference: vla-harness/contracts/v1/examples/capability.acquire-object.json
+  reference: policy-harness/contracts/v1/examples/capability.acquire-object.json
   requirements: 入口：壶柄身份、握取包络与接近条件成立。退出检查：壶柄身份与接触分别确认
 - name: move_payload
   status: 已有卡
-  reference: vla-harness/contracts/v1/examples/capability.move-payload.json
+  reference: policy-harness/contracts/v1/examples/capability.move-payload.json
   requirements: 入口：壶柄保持令牌有效且载荷组合获准。退出检查：壶体到达且路径清空
 - name: align_for_use
   status: 目录模板
@@ -487,10 +487,10 @@ test_vectors:
   ordering: [取得越界反证先于失败判定]
   forbidden_outcomes: [以一个未知液位谓词覆盖已证实的反证]
 evidence_refs:
-- vla-harness/contracts/v1/examples/capability.acquire-object.json
-- vla-harness/contracts/v1/examples/capability.move-payload.json
-- vla-harness/contracts/v1/examples/verification.unknown-occluded.json
-- vla-harness/contracts/v1/examples/body-profile.g1-inspire.json
+- policy-harness/contracts/v1/examples/capability.acquire-object.json
+- policy-harness/contracts/v1/examples/capability.move-payload.json
+- policy-harness/contracts/v1/examples/verification.unknown-occluded.json
+- policy-harness/contracts/v1/examples/body-profile.g1-inspire.json
 protocol_checks:
 - object: Capability
   fields: [parameter_schema, result_schema]

@@ -151,11 +151,11 @@ capabilities:
   requirements: 入口：仿真支撑输入合格且仿真运动包络已绑定；实机阻塞。退出检查：有基座定位与支撑证据
 - name: s2.barrier
   status: 内部节点
-  reference: vla-harness/docs/harness-design.md
+  reference: policy-harness/docs/harness-design.md
   requirements: 入口：步态调用已终止，等待核验腿轨实际处置。退出检查：实测稳定且旧 grant 失效
 - name: acquire_object
   status: 已有卡
-  reference: vla-harness/contracts/v1/examples/capability.acquire-object.json
+  reference: policy-harness/contracts/v1/examples/capability.acquire-object.json
   requirements: 入口：站稳、L 已释放且右侧站姿抓取获准。退出检查：对象身份与物手关系正确
 simo:
 - phase: walk
@@ -345,11 +345,11 @@ test_vectors:
   - first: slow
     then: irq
 evidence_refs:
-- vla-harness/contracts/v1/examples/monitoring-brief.locomote.json
-- vla-harness/contracts/v1/examples/event.required-clause-coverage-lost.json
-- vla-harness/contracts/v1/examples/event.baseline-fall-idle.json
-- vla-harness/contracts/v1/examples/event.baseline-fall-unknown-intent.json
-- vla-harness/contracts/v1/examples/body-profile.g1-inspire.json
+- policy-harness/contracts/v1/examples/monitoring-brief.locomote.json
+- policy-harness/contracts/v1/examples/event.required-clause-coverage-lost.json
+- policy-harness/contracts/v1/examples/event.baseline-fall-idle.json
+- policy-harness/contracts/v1/examples/event.baseline-fall-unknown-intent.json
+- policy-harness/contracts/v1/examples/body-profile.g1-inspire.json
 protocol_checks:
 - object: BodyProfile
   fields: [sensors, compatible_combinations]

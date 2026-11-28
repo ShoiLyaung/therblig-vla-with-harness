@@ -2,7 +2,7 @@
 
 **Multi-Repository Architecture（多仓库架构）+ Plugin-based Architecture（插件化架构）+ Contract-first Design（接口契约优先设计）。**
 
-> **vla-harness = Orchestration / Execution Plane**\
+> **policy-harness = Orchestration / Execution Plane**\
 > **therblig-vla = Policy / Primitive Skill Plane**\
 > `policy-interface-protocol` 是两者之间的**稳定接口契约（Contract）**，独立于具体语言、实现与宿主。
 
@@ -25,7 +25,7 @@
 │                 ⇅                              │
 │ Host Adapter · Integration Boundary            │
 │                 ⇅                              │
-│ vla-harness · Orchestration / Execution        │         ┌───────────────────────┐
+│ policy-harness · Orchestration / Execution        │         ┌───────────────────────┐
 │   Planner (LangGraph Agent Loop)               │◄────────┤ Real-time Event       │
 │     ⇅ Foundation Model (reasoning backend)     │观测/中断│ Monitor               │
 │   Context Manager · Memory · Verifier          │         │                       │
@@ -54,7 +54,7 @@
               Physical World / Environment ────────────────────────────┘
 ```
 
-图中向下传递任务与控制目标，向上返回观测、执行状态，形成闭环。System 2 由 `vla-harness` 与其调用的基础模型构成：Harness 内的 Planner 以 LangGraph 风格的 Agent Loop 负责任务分解与重规划，基础模型作为可替换的推理后端；Codex、DSH 等宿主只通过 Adapter 接入。`therblig-vla` 是 System 1 的一种可替换实现，其他策略通过适配器接入同一协议。
+图中向下传递任务与控制目标，向上返回观测、执行状态，形成闭环。System 2 由 `policy-harness` 与其调用的基础模型构成：Harness 内的 Planner 以 LangGraph 风格的 Agent Loop 负责任务分解与重规划，基础模型作为可替换的推理后端；Codex、DSH 等宿主只通过 Adapter 接入。`therblig-vla` 是 System 1 的一种可替换实现，其他策略通过适配器接入同一协议。
 
 三个 System 之外并行运行一个 **Real-time event monitor**（本地轻量 VLM 和/或规则检测器），高频观察 User、Robot body 与 Physical world。S2 经它获取用户、身体与环境的观测数据；safety rules 驻留在 monitor 中，触发时一方面直接让 S0 立即做出保护动作（如停止、减速），不等待 S2；另一方面向 S2 发出 interrupt，由 S2 取消当前调用并重规划，期间 S0 保持身体稳定。S2 还可经 Tool interface 对 S0 发起 optional direct call，仅限有界的模式请求（如保持、减速、停止、切换控制模式）。另外，实际机器人控制有实时性要求。System 2 负责高层规划、监控和重规划；System 1 负责低延迟策略推理与动作序列执行；System 0 负责设备驱动与本地实时控制。LLM 推理延迟不应直接决定底层控制周期。
 
@@ -70,11 +70,11 @@
 | S0：Controller / Driver | 设备驱动、本地实时控制、实测状态反馈、控制限位及本地保护；可受理 S2 的有界模式请求，以及 monitor 按 safety rules 触发的即时保护。 | 控制与保护不能等待 S2 的网络请求或 LLM 推理完成；保留最终控制权。 |
 | Real-time event monitor | 高频观察 User、Robot body 与 Physical world；按 safety rules 直接触发 S0 即时保护。向 S2 提供观测数据，需要重新评估时发出 interrupt；不确认简报，不报告自身监测状态。 | 位于三个 System 之外，不被调用即可发信号；不进入任务级规划。 |
 
-`therblig-vla` 同时提供可导入的研究组件和独立运行时；其他 VLA、程序策略或独立服务可在满足契约后替换它。通用的 `vla-harness` 不负责训练具体 VLA。
+`therblig-vla` 同时提供可导入的研究组件和独立运行时；其他 VLA、程序策略或独立服务可在满足契约后替换它。通用的 `policy-harness` 不负责训练具体 VLA。
 
 这里最重要的设计原则是：
 
-`vla-harness` 不应该知道 Therblig 是什么，它只知道：
+`policy-harness` 不应该知道 Therblig 是什么，它只知道：
 
 ```text
 Task/Plan
@@ -108,7 +108,7 @@ Claude / Codex / DSH / OpenHands / custom agent
           adapter
              │
              ▼
-       vla-harness
+       policy-harness
              │
              ▼
 therblig-vla / OpenVLA / Custom Policy
@@ -124,6 +124,8 @@ therblig-vla / OpenVLA / Custom Policy
 | 独立 Harness | 实现同版协议的客户端即可调用现有 S1 服务。宿主、规划和记忆可自行选择。 |
 
 ## 跨仓调用
+
+2026-11-29 起 `vla-harness` 更名为 `policy-harness`；此前提交信息中的旧名指同一仓库。
 
 以下为执行型能力的候选 HTTP/JSON 接口。
 预测接口、monitor 事件和 S2→S0 有界模式请求已裁决为同一契约版本内的可选 profile（`prediction`、`monitor-events`、`body-modes`）；任务与持久记忆归 S2，S1 只接收调用切片；执行、取消、可知状态和验证结果各自演进。HTTP 操作在评审通过后再绑定，见[决策登记](docs/design/README.md#决策登记)。
@@ -145,9 +147,9 @@ Harness 采用独立 Python Core 与顶层宿主 Adapter 的组织方式；Adapt
 
 | 仓库 | 路径 | 内容 |
 |---|---|---|
-| `vla-harness` | `contracts/v1/` | 公共 schemas、HTTP 绑定及协议示例；与 Python 实现分离。`openapi.yaml` 定义 HTTP 操作，引用 `schemas/` 中的对象定义，`examples/` 提供两端共用的样例。协议独立版本化，客户端与服务端各在 `tests/contract/` 校验同版契约。 |
-| `vla-harness` | `packages/harness-core/src/vla_harness/` | Core、Context、Planner、Tools、Policy Client/Registry、Resolver、Memory、Verifier 与策略协议绑定。 |
-| `vla-harness` | `adapters/codex-mcp/`、`dsh-plugin/` | 宿主 Adapter（Codex、DSH 及其他宿主适配器），按宿主需要独立组织语言和打包。 |
+| `policy-harness` | `contracts/v1/` | 公共 schemas、HTTP 绑定及协议示例；与 Python 实现分离。`openapi.yaml` 定义 HTTP 操作，引用 `schemas/` 中的对象定义，`examples/` 提供两端共用的样例。协议独立版本化，客户端与服务端各在 `tests/contract/` 校验同版契约。 |
+| `policy-harness` | `packages/harness-core/src/policy_harness/` | Core、Context、Planner、Tools、Policy Client/Registry、Resolver、Memory、Verifier 与策略协议绑定。 |
+| `policy-harness` | `adapters/codex-mcp/`、`dsh-plugin/` | 宿主 Adapter（Codex、DSH 及其他宿主适配器），按宿主需要独立组织语言和打包。 |
 | `therblig-vla` | `therbligs/` | primitive catalog 及语义 schema。 |
 | `therblig-vla` | `src/therblig_vla/semantics/`、`policies/` | 语义对象、策略接口、注册与加载。 |
 | `therblig-vla` | `src/therblig_vla/inference/`、`runtime/` | 推理与局部动作执行；不包含上层 Agent Loop。 |

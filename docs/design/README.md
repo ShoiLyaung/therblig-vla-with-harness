@@ -21,12 +21,12 @@
 |---|---|---|
 | 历史定义如何变成机器人标注 | [逐项分析](../../therblig-vla/docs/therblig-analysis.md) | [目录实例](../../therblig-vla/therbligs/catalog.v0.yaml) |
 | 策略能看什么、训练哪些轴 | [四套派生规则](../../therblig-vla/docs/derivations.md) | [目录结构](../../therblig-vla/therbligs/catalog.schema.json) |
-| 如何在同一策略上运行不同子任务 | [S1 运行时](../../therblig-vla/docs/s1-design.md) | [能力契约](../../vla-harness/contracts/v1/schemas/capability.schema.json) |
-| 消息及幂等如何跨语言互通 | [协议草案](../../vla-harness/docs/protocol-v1.md) | [公共类型](../../vla-harness/contracts/v1/schemas/common.schema.json) |
-| 谁决定下一步和最终成败 | [Harness Core](../../vla-harness/docs/harness-design.md) | [验证对象](../../vla-harness/contracts/v1/schemas/verification.schema.json) |
-| S2 如何提供阶段意图 | [输入与阶段简报](s0-and-monitor.md#51-输入与阶段简报) | [类型化简报](../../vla-harness/contracts/v1/schemas/monitoring-brief.schema.json) |
-| 发生打断后身体怎样停稳 | [S0 与外部 Monitor](s0-and-monitor.md) | [事件契约](../../vla-harness/contracts/v1/schemas/event.schema.json) |
-| 抽屉开启与拿取如何并发 | [五个走通示例](walkthroughs.md) | [执行快照](../../vla-harness/contracts/v1/schemas/execution.schema.json) |
+| 如何在同一策略上运行不同子任务 | [S1 运行时](../../therblig-vla/docs/s1-design.md) | [能力契约](../../policy-harness/contracts/v1/schemas/capability.schema.json) |
+| 消息及幂等如何跨语言互通 | [协议草案](../../policy-harness/docs/protocol-v1.md) | [公共类型](../../policy-harness/contracts/v1/schemas/common.schema.json) |
+| 谁决定下一步和最终成败 | [Harness Core](../../policy-harness/docs/harness-design.md) | [验证对象](../../policy-harness/contracts/v1/schemas/verification.schema.json) |
+| S2 如何提供阶段意图 | [输入与阶段简报](s0-and-monitor.md#51-输入与阶段简报) | [类型化简报](../../policy-harness/contracts/v1/schemas/monitoring-brief.schema.json) |
+| 发生打断后身体怎样停稳 | [S0 与外部 Monitor](s0-and-monitor.md) | [事件契约](../../policy-harness/contracts/v1/schemas/event.schema.json) |
+| 抽屉开启与拿取如何并发 | [五个走通示例](walkthroughs.md) | [执行快照](../../policy-harness/contracts/v1/schemas/execution.schema.json) |
 | 跨任务架构如何检验 | [两档场景集](scenarios/README.md) | [覆盖矩阵](scenarios/coverage.md)与[缺口登记](scenarios/gaps.md) |
 
 ### 事实依据
@@ -154,7 +154,7 @@ S2 在阶段开始推送最小意图子句。Monitor 根据当前有效简报核
 
 `E` 是头部相机观察轨。G1 没有主动颈关节。
 主动变更观察方向要申领 `W` 或 `L`，并考虑对其他活动分支视野的影响。
-RH56DFX 的每手六个驱动器与 G1 的 29 个本体自由度分别登记。`g1-inspire@3` 为每只手发布六路轴向载荷计数和独立电流通道，指面触觉阵列不可用。腕部相机仍待确认。[身体示例](../../vla-harness/contracts/v1/examples/body-profile.g1-inspire.json)
+RH56DFX 的每手六个驱动器与 G1 的 29 个本体自由度分别登记。`g1-inspire@3` 为每只手发布六路轴向载荷计数和独立电流通道，指面触觉阵列不可用。腕部相机仍待确认。[身体示例](../../policy-harness/contracts/v1/examples/body-profile.g1-inspire.json)
 
 ### 三类容易混淆的记录
 
@@ -183,27 +183,29 @@ S2 确认旧调用无法继续产生冲突指令，再按实测结果选择后�
 
 | 评审场景 | 实例 | 核对的设计点 |
 |---|---|---|
-| 选择具体对象 | [采集能力](../../vla-harness/contracts/v1/examples/capability.acquire-object.json) | 入口身份、接触效果与退出保持 |
-| 搬运期间维持握持 | [移动载荷](../../vla-harness/contracts/v1/examples/capability.move-payload.json) | 手依赖、驱动掩码与可选腰 |
-| 对机构做连续操作 | [封装能力](../../vla-harness/contracts/v1/examples/capability.open-drawer.json) | 一次受理的内部组合和接触退出态 |
-| 展开上层目标 | [可展开能力](../../vla-harness/contracts/v1/examples/capability.assemble-goal.json) | 子目标、依赖关系与组合效果 |
-| 阶段开始与刷新 | [首发](../../vla-harness/contracts/v1/examples/monitoring-brief.acquire.json)、[刷新](../../vla-harness/contracts/v1/examples/monitoring-brief.refresh-with-execution.json) | 同 ID 和内容摘要，补执行句柄及租约 |
-| 空闲跌倒 | [无阶段基线中断](../../vla-harness/contracts/v1/examples/event.baseline-fall-idle.json) | Event 只标 L；S2 按 S0 保护回执的实际范围封住待派项，回执缺失时先隔离该身体。 |
-| 宽限到期 | [未布防中断](../../vla-harness/contracts/v1/examples/event.required-clause-unarmed-grace-expired.json) | 先收紧，无执行句柄时按调用定位 |
-| 普通话语 | [新增请求观测](../../vla-harness/contracts/v1/examples/observation.utterance-new-request.json) | 持久游标保存，S2 决定是否追加任务 |
-| 发起结构化调用 | [红杯调用](../../vla-harness/contracts/v1/examples/invocation.pick-red-cup.json) | 禁止目标、实体锚定和预期保护代际 |
-| 轮询执行 | [活动快照](../../vla-harness/contracts/v1/examples/execution.running.json) | 句柄、执行版本和授权到期时间 |
-| 纠正中的取消 | [取消快照](../../vla-harness/contracts/v1/examples/execution.canceled-after-correction.json) | 稳定证据及仍然受控的手部 |
-| 用户修改命令 | [中断事件](../../vla-harness/contracts/v1/examples/event.user-correction-interrupt.json) | 事件范围、因果关联及分支隔离 |
-| S2 请求短时保持 | [模式请求](../../vla-harness/contracts/v1/examples/mode-request.hold.json) | 持续时间、保护 epoch 及调用身份 |
-| 补证前后 | [遮挡](../../vla-harness/contracts/v1/examples/verification.unknown-occluded.json)、[验证成功](../../vla-harness/contracts/v1/examples/verification.success.json) | 历史未知保留，后续验证可引用前次结论 |
+| 选择具体对象 | [采集能力](../../policy-harness/contracts/v1/examples/capability.acquire-object.json) | 入口身份、接触效果与退出保持 |
+| 搬运期间维持握持 | [移动载荷](../../policy-harness/contracts/v1/examples/capability.move-payload.json) | 手依赖、驱动掩码与可选腰 |
+| 对机构做连续操作 | [封装能力](../../policy-harness/contracts/v1/examples/capability.open-drawer.json) | 一次受理的内部组合和接触退出态 |
+| 展开上层目标 | [可展开能力](../../policy-harness/contracts/v1/examples/capability.assemble-goal.json) | 子目标、依赖关系与组合效果 |
+| 阶段开始与刷新 | [首发](../../policy-harness/contracts/v1/examples/monitoring-brief.acquire.json)、[刷新](../../policy-harness/contracts/v1/examples/monitoring-brief.refresh-with-execution.json) | 同 ID 和内容摘要，补执行句柄及租约 |
+| 空闲跌倒 | [无阶段基线中断](../../policy-harness/contracts/v1/examples/event.baseline-fall-idle.json) | Event 只标 L；S2 按 S0 保护回执的实际范围封住待派项，回执缺失时先隔离该身体。 |
+| 宽限到期 | [未布防中断](../../policy-harness/contracts/v1/examples/event.required-clause-unarmed-grace-expired.json) | 先收紧，无执行句柄时按调用定位 |
+| 普通话语 | [新增请求观测](../../policy-harness/contracts/v1/examples/observation.utterance-new-request.json) | 持久游标保存，S2 决定是否追加任务 |
+| 发起结构化调用 | [红杯调用](../../policy-harness/contracts/v1/examples/invocation.pick-red-cup.json) | 禁止目标、实体锚定和预期保护代际 |
+| 轮询执行 | [活动快照](../../policy-harness/contracts/v1/examples/execution.running.json) | 句柄、执行版本和授权到期时间 |
+| 纠正中的取消 | [取消快照](../../policy-harness/contracts/v1/examples/execution.canceled-after-correction.json) | 稳定证据及仍然受控的手部 |
+| 用户修改命令 | [中断事件](../../policy-harness/contracts/v1/examples/event.user-correction-interrupt.json) | 事件范围、因果关联及分支隔离 |
+| S2 请求短时保持 | [模式请求](../../policy-harness/contracts/v1/examples/mode-request.hold.json) | 持续时间、保护 epoch 及调用身份 |
+| 补证前后 | [遮挡](../../policy-harness/contracts/v1/examples/verification.unknown-occluded.json)、[验证成功](../../policy-harness/contracts/v1/examples/verification.success.json) | 历史未知保留，后续验证可引用前次结论 |
 
 `core-execution` 是基本互通面。
 `prediction`、`body-modes` 和 `monitor-events` 可各自声明支持范围。
 本地保护语义独立于 S2 事件流的传输选择。
-HTTP 操作在评审通过后再绑定。[OpenAPI 占位文件](../../vla-harness/contracts/v1/openapi.yaml)
+HTTP 操作在评审通过后再绑定。[OpenAPI 占位文件](../../policy-harness/contracts/v1/openapi.yaml)
 
 ## 决策登记
+
+2026-11-29 起 `vla-harness` 更名为 `policy-harness`；此前提交信息中的旧名指同一仓库。
 
 D1–D12 均已裁决。
 
@@ -248,7 +250,7 @@ D1–D12 均已裁决。
 同一条记录可以同时表达“已受理取消、仍在停稳、效果未知”。
 单一扁平枚举会把通道超时和物理失败压进同一状态。
 任意提供者自定义全部状态则难以安全互通。
-细节通过命名空间 reason code 补充，核心转换见[协议设计](../../vla-harness/docs/protocol-v1.md)。
+细节通过命名空间 reason code 补充，核心转换见[协议设计](../../policy-harness/docs/protocol-v1.md)。
 
 ### D5 · 上下文边界
 

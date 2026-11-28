@@ -165,7 +165,7 @@ dag:
 capabilities:
 - name: s2.select
   status: 内部节点
-  reference: vla-harness/docs/harness-design.md
+  reference: policy-harness/docs/harness-design.md
   requirements: 入口：候选对象与材料验收标准可核对。退出检查：实例和标准可区分
 - name: fragile_acquire
   status: 需新建
@@ -173,7 +173,7 @@ capabilities:
   requirements: 入口：实际手、通道、材料工况与所需单位均获批准。退出检查：入口证据覆盖实际承载通道
 - name: move_payload
   status: 已有卡
-  reference: vla-harness/contracts/v1/examples/capability.move-payload.json
+  reference: policy-harness/contracts/v1/examples/capability.move-payload.json
   requirements: 入口：握稳且保持令牌有效，载荷包络允许提升。退出检查：物件随手而非留在台面
 - name: measure_condition
   status: 目录模板
@@ -304,9 +304,9 @@ test_vectors:
   - first: mask
     then: check
 evidence_refs:
-- vla-harness/contracts/v1/examples/capability.acquire-object.json
-- vla-harness/contracts/v1/examples/observation-stream.hand-force.json
-- vla-harness/contracts/v1/examples/body-profile.g1-inspire.json
+- policy-harness/contracts/v1/examples/capability.acquire-object.json
+- policy-harness/contracts/v1/examples/observation-stream.hand-force.json
+- policy-harness/contracts/v1/examples/body-profile.g1-inspire.json
 protocol_checks:
 - object: Capability
   fields: [semantics, limits]

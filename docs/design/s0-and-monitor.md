@@ -58,7 +58,7 @@ Monitor 的规则确定触发条件、保护级别和建议范围，S0 根据本
 每手的六个压力传感器位于微型伺服电缸尾部，感受连杆传递的轴向载荷。`g1-inspire@3` 按 `axis_id` 记录 `FORCE_ACT(0..5)` 的 0–1000 原始计数、标定修订和饱和位。手指表面没有传感器，接触位置影响计数，不能由此定位。DF 系列手册与具体单元的对应仍须核实，2026-09 英文手册链接不可达，未读。[硬件依据与实测来源](README.md#rh56-手部传感依据)
 `GESTURE_FORCE_CLB` 在空载且各指无接触时运行约 6 s，建立设备零点。计数换算 N 还需适用于该通道和工况的独立模型。`CURRENT(0..5)` 是独立电流读数，仅在验证后作候补代理。
 
-[机读目录与投影](../../therblig-vla/docs/derivations.md) · [协议与本体配置](../../vla-harness/docs/protocol-v1.md)
+[机读目录与投影](../../therblig-vla/docs/derivations.md) · [协议与本体配置](../../policy-harness/docs/protocol-v1.md)
 
 ### 2.2 维持模式
 
@@ -181,7 +181,7 @@ REQUESTED → REJECTED
 握持的建立与解除走 S1 主路径。接口白名单拒绝开爪、原始关节目标、任意控制配置及清除 `STOP_LATCHED`。
 同幂等键与相同请求摘要读取同一状态，摘要变化返回冲突。
 
-[ModeRequest 和回执字段](../../vla-harness/contracts/v1/schemas/mode-request.schema.json) · [请求示例](../../vla-harness/contracts/v1/examples/mode-request.hold.json)
+[ModeRequest 和回执字段](../../policy-harness/contracts/v1/schemas/mode-request.schema.json) · [请求示例](../../policy-harness/contracts/v1/examples/mode-request.hold.json)
 
 ## 5. Monitor 输入、规则与信号
 
@@ -194,11 +194,11 @@ REQUESTED → REJECTED
 | 控制状态 | S0 的当前模式、grant、稳定性、保护原因、scope 和 epoch。它们反映身体内部状态，流类型为 CONTROL_STATE，由控制器发布。 |
 | 阶段意图 | S2 在每个可派发阶段开始时单向推送租约简报，随后派发，不等待；并行作用域分别刷新。任务记忆不进入 Monitor。 |
 
-[输入描述与样本头](../../vla-harness/contracts/v1/schemas/observation-stream.schema.json)以采集时钟、帧或编码、来源、有效／饱和位及来源修订解释样本。sensor_ref 指向 BodyProfile 的测量方法、通道、速率、标定及验证状态。速率和时延未测时为 UNSPECIFIED，不填值。实测时延记录起止端、时钟、统计量、工况和来源。另见[本体档案](../../vla-harness/contracts/v1/examples/body-profile.g1-inspire.json)。
+[输入描述与样本头](../../policy-harness/contracts/v1/schemas/observation-stream.schema.json)以采集时钟、帧或编码、来源、有效／饱和位及来源修订解释样本。sensor_ref 指向 BodyProfile 的测量方法、通道、速率、标定及验证状态。速率和时延未测时为 UNSPECIFIED，不填值。实测时延记录起止端、时钟、统计量、工况和来源。另见[本体档案](../../policy-harness/contracts/v1/examples/body-profile.g1-inspire.json)。
 
 子句只收紧当前批准域，聚合采用允许范围取交、禁选取并、上限取小、下限取大、证据取合取。首次简报出现单位或坐标不可比、交集为空时，S2 在发送前查出则 BLOCKED；Monitor 收到后查出则子句 REJECTED，必需项立即请求收紧并发中断。只有在途替换有前任：不能证明为前任子集时拒绝替换，保留仍有效的前任。登记引用固定两端部署的参数 schema、评估器及最高级别；命名空间扩展须预登记。阶段结束发一次 END／REVOKE 并停刷；资源占用后释放、epoch 越过、取代、END、REVOKE 或 FENCED 是终止围栏。租约到期只撤下本阶段子句并回到 BASELINE。同 ID 同摘要的有效刷新可经身份、作用域、写者及保护代际、无释放和无终止围栏核验后重新安装，保留原宽限历史。重装先检查必需子句是否从未布防且原宽限已届满：即使输入已经恢复，也立即判 GRACE_EXPIRED，先收紧再发 monitor/required_clause_unarmed。其余子句按当前合格证据布防；曾布防而缺输入时判 LOST，必需项先收紧再发 monitor/clause_coverage_lost。无刷新时覆盖空窗静默，基线危险仍可触发。
 
-到期记录按部署策略保留。回收时同步推进按签发域保存、只在本次启动内有效的水位（重启时清空），严格越过回收记录的 issued_at；无匹配记录且 issued_at 早于水位的投递一律丢弃。Monitor 重启记本地启动时刻，不持久化 END／REVOKE 围栏。启动围栏仅对 MonitoringBrief 首发和刷新检查映射到本地的 sent_at，早于启动时刻减跨域时钟误差上界时丢弃。无可用时钟映射时只运行基线。END／REVOKE 不受启动时间围栏约束，认证及 brief_id、作用域、摘要和 command_seq 检查限定它只能结束所绑定的单一阶段。重启后的新鲜刷新通过本次水位和控制状态检查，即可重新安装仍存活的阶段，并建立新的本地布防历史。完整字段和状态机见[阶段简报契约](../../vla-harness/docs/protocol-v1.md#51-阶段简报与合同边界)。
+到期记录按部署策略保留。回收时同步推进按签发域保存、只在本次启动内有效的水位（重启时清空），严格越过回收记录的 issued_at；无匹配记录且 issued_at 早于水位的投递一律丢弃。Monitor 重启记本地启动时刻，不持久化 END／REVOKE 围栏。启动围栏仅对 MonitoringBrief 首发和刷新检查映射到本地的 sent_at，早于启动时刻减跨域时钟误差上界时丢弃。无可用时钟映射时只运行基线。END／REVOKE 不受启动时间围栏约束，认证及 brief_id、作用域、摘要和 command_seq 检查限定它只能结束所绑定的单一阶段。重启后的新鲜刷新通过本次水位和控制状态检查，即可重新安装仍存活的阶段，并建立新的本地布防历史。完整字段和状态机见[阶段简报契约](../../policy-harness/docs/protocol-v1.md#51-阶段简报与合同边界)。
 
 必需子句的宽限起点取收到简报与受管资源“被本阶段占用”的较晚时刻，DRIVE、TAKEOVER、DEPEND、MAINTAINED 均算占用。只读阶段没有必需子句。宽限只按批准策略引用计时，刷新不重置。确定无法布防立即按 on_coverage_loss 收紧，宽限到期仍未就绪同样处理；收紧请求先送 S0，再以 CANCEL_AFFECTED 中断。窗口内成功只记本地。可选子句失败及未影响必需覆盖的降级均只记本地。Monitor 不主动访问 S2。
 
@@ -271,7 +271,7 @@ S2 据事件封锁受影响的派发，再通过回执、Execution 与 S0 实测
 Monitor 丢失心跳或传感器失效时，S0 继续本地控制。有保护依赖的运动由身体配置按能力下降处理。
 向 S2 的事件传输待在 SSE、WebSocket、DDS 桥之间选定。S0 本地通道独立选择适配实现。
 
-[通用事件和保护回执](../../vla-harness/contracts/v1/schemas/event.schema.json)
+[通用事件和保护回执](../../policy-harness/contracts/v1/schemas/event.schema.json)
 
 ### 5.5 断线恢复与状态核对
 

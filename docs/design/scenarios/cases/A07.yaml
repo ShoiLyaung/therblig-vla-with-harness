@@ -164,7 +164,7 @@ dag:
 capabilities:
 - name: s2.profile
   status: 内部节点
-  reference: vla-harness/docs/harness-design.md
+  reference: policy-harness/docs/harness-design.md
   requirements: 入口：物件已安全保持，有独立批准域供解析；本机缺该域应拒绝。退出检查：ModeStatus 与实测配置一致
 - name: handover_present
   status: 需新建
@@ -172,7 +172,7 @@ capabilities:
   requirements: 入口：仅在假设的批准域实际切入后进入。退出检查：接收手与物件相对位置适合交接
 - name: s2.barrier
   status: 内部节点
-  reference: vla-harness/docs/harness-design.md
+  reference: policy-harness/docs/harness-design.md
   requirements: 入口：呈递就位且给予方仍有有效保持令牌。退出检查：接触、承载与身份都成立
 - name: handover_release
   status: 需新建
@@ -282,9 +282,9 @@ test_vectors:
   - first: withdrawn
     then: gate
 evidence_refs:
-- vla-harness/contracts/v1/examples/mode-request.hold.json
-- vla-harness/contracts/v1/examples/observation.utterance-new-request.json
-- vla-harness/contracts/v1/examples/body-profile.g1-inspire.json
+- policy-harness/contracts/v1/examples/mode-request.hold.json
+- policy-harness/contracts/v1/examples/observation.utterance-new-request.json
+- policy-harness/contracts/v1/examples/body-profile.g1-inspire.json
 protocol_checks:
 - object: ModeRequest
   fields: [mode, profile_id, expected_protection_epoch]

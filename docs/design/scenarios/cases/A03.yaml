@@ -218,7 +218,7 @@ dag:
 capabilities:
 - name: open_drawer
   status: 已有卡
-  reference: vla-harness/contracts/v1/examples/capability.open-drawer.json
+  reference: policy-harness/contracts/v1/examples/capability.open-drawer.json
   requirements: 入口：抽屉身份和左把手可达、左支准入有效。退出检查：抽屉开度已实测
 - name: move_unloaded
   status: 目录模板
@@ -226,11 +226,11 @@ capabilities:
   requirements: 入口：物件与右臂走廊已绑定，与左支组合获准。退出检查：预抓位合格
 - name: acquire_object
   status: 已有卡
-  reference: vla-harness/contracts/v1/examples/capability.acquire-object.json
+  reference: policy-harness/contracts/v1/examples/capability.acquire-object.json
   requirements: 入口：右臂到位且身份、握取配置已核准。退出检查：物件身份与握持均可证
 - name: s2.barrier
   status: 内部节点
-  reference: vla-harness/docs/harness-design.md
+  reference: policy-harness/docs/harness-design.md
   requirements: 入口：左右支均交出实际处置与新鲜效果。退出检查：开度、通行与支撑同时有效
 - name: move_payload_guarded_drawer
   status: 目录模板
@@ -453,10 +453,10 @@ test_vectors:
   - first: hold
     then: irq
 evidence_refs:
-- vla-harness/contracts/v1/examples/capability.open-drawer.json
-- vla-harness/contracts/v1/examples/monitoring-brief.maintain-barrier.json
-- vla-harness/contracts/v1/examples/monitoring-brief.parallel-branch.json
-- vla-harness/contracts/v1/examples/body-profile.g1-inspire.json
+- policy-harness/contracts/v1/examples/capability.open-drawer.json
+- policy-harness/contracts/v1/examples/monitoring-brief.maintain-barrier.json
+- policy-harness/contracts/v1/examples/monitoring-brief.parallel-branch.json
+- policy-harness/contracts/v1/examples/body-profile.g1-inspire.json
 protocol_checks:
 - object: Capability
   fields: [semantics, body_requirements]

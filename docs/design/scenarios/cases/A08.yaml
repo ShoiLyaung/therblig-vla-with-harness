@@ -194,7 +194,7 @@ capabilities:
   requirements: 入口：折叠目标、布料实例与地标标准已绑定。退出检查：可见角点区分且观测新鲜
 - name: acquire_object
   status: 已有卡
-  reference: vla-harness/contracts/v1/examples/capability.acquire-object.json
+  reference: policy-harness/contracts/v1/examples/capability.acquire-object.json
   requirements: 入口：左角可见且双臂取角组合批准。退出检查：左角随手移动；入口：右角可见且双臂取角组合批准。退出检查：右角随手移动
 - name: fold_fabric
   status: 需新建
@@ -342,9 +342,9 @@ test_vectors:
   - first: corner
     then: check
 evidence_refs:
-- vla-harness/contracts/v1/examples/capability.acquire-object.json
-- vla-harness/contracts/v1/examples/verification.unknown-occluded.json
-- vla-harness/contracts/v1/examples/body-profile.g1-inspire.json
+- policy-harness/contracts/v1/examples/capability.acquire-object.json
+- policy-harness/contracts/v1/examples/verification.unknown-occluded.json
+- policy-harness/contracts/v1/examples/body-profile.g1-inspire.json
 protocol_checks:
 - object: Invocation
   fields: [targets, observation_refs]

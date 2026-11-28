@@ -264,11 +264,11 @@ dag:
 capabilities:
 - name: acquire_object
   status: 已有卡
-  reference: vla-harness/contracts/v1/examples/capability.acquire-object.json
+  reference: policy-harness/contracts/v1/examples/capability.acquire-object.json
   requirements: 入口：旧目标修订有效且预抓准入已通过。退出检查：旧修订证据只供历史；入口：验证所选 restore 或 retreat 的公开 Result、空手实测和逐资源处置；蓝杯已绑定且红杯禁选。退出检查：独立核对蓝杯在手
 - name: s2.reconcile
   status: 内部节点
-  reference: vla-harness/docs/harness-design.md
+  reference: policy-harness/docs/harness-design.md
   requirements: 入口：纠正、中断或游标缺口使旧分支隔离。退出检查：权威意图与所有权均可定位
 - name: safe_putback_unknown_payload
   status: 需新建
@@ -280,7 +280,7 @@ capabilities:
   requirements: 入口：仅有空手证据且路径清空。退出检查：无接触且工作区清空
 - name: move_payload
   status: 已有卡
-  reference: vla-harness/contracts/v1/examples/capability.move-payload.json
+  reference: policy-harness/contracts/v1/examples/capability.move-payload.json
   requirements: 入口：蓝杯已取得且保持令牌有效。退出检查：杯离桌并随臂移动
 - name: stage_for_next_use
   status: 目录模板
@@ -569,10 +569,10 @@ test_vectors:
   - first: drop
     then: fresh
 evidence_refs:
-- vla-harness/contracts/v1/examples/event.user-correction-interrupt.json
-- vla-harness/contracts/v1/examples/execution.canceled-after-correction.json
-- vla-harness/contracts/v1/examples/observation.utterance-new-request.json
-- vla-harness/contracts/v1/examples/body-profile.g1-inspire.json
+- policy-harness/contracts/v1/examples/event.user-correction-interrupt.json
+- policy-harness/contracts/v1/examples/execution.canceled-after-correction.json
+- policy-harness/contracts/v1/examples/observation.utterance-new-request.json
+- policy-harness/contracts/v1/examples/body-profile.g1-inspire.json
 protocol_checks:
 - object: Event
   fields: [interrupt, evidence_refs]

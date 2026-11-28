@@ -27,7 +27,7 @@
 | 效果成立 | 目标、姿态、支撑、接触等谓词有新鲜证据 |
 | 意图满足 | 效果所指实例、目的地和约束与有效目标修订一致 |
 
-时间线用于设计审查，条件和阈值需按设备与场景标定。 [标签与共轭规则](../../therblig-vla/docs/derivations.md) · [协议 v1](../../vla-harness/docs/protocol-v1.md)
+时间线用于设计审查，条件和阈值需按设备与场景标定。 [标签与共轭规则](../../therblig-vla/docs/derivations.md) · [协议 v1](../../policy-harness/docs/protocol-v1.md)
 
 ## W1 单臂拾放红杯
 
@@ -100,7 +100,7 @@ S2 通过 Result 判断是否还需等待。中途出现遮挡时选择取证能
 | `RL` | `R` 受架面支撑且与手分离 | 确认杯跌落或挂在手上 | 释放反馈已到，支撑与身份暂不可见 |
 | `TE` 回撤 | 在清空路径上撤回，杯位随后仍稳定 | 回撤扰动已放好的杯或有碰撞证据 | 末端定位或放置后的杯位未能确认 |
 
-[能力样例](../../vla-harness/contracts/v1/examples/capability.move-payload.json) · [遮挡验证样例](../../vla-harness/contracts/v1/examples/verification.unknown-occluded.json)
+[能力样例](../../policy-harness/contracts/v1/examples/capability.move-payload.json) · [遮挡验证样例](../../policy-harness/contracts/v1/examples/verification.unknown-occluded.json)
 
 ### W1 阶段简报与保护证据
 
@@ -184,7 +184,7 @@ S2 → S1 → S0       派发蓝杯 B，forbidden_targets 包含 R
 | `FAILED` | 接触证据确定握了禁选对象，或新版本已执行提升后相机确证 B 仍留在桌上。 |
 | `UNKNOWN` | 静稳已确认，但遮挡使手中物件身份未知。先取证或完成安全恢复，避免提交或盲目重复。 |
 
-[纠正事件示例](../../vla-harness/contracts/v1/examples/event.user-correction-interrupt.json) · [取消结果示例](../../vla-harness/contracts/v1/examples/execution.canceled-after-correction.json)
+[纠正事件示例](../../policy-harness/contracts/v1/examples/event.user-correction-interrupt.json) · [取消结果示例](../../policy-harness/contracts/v1/examples/execution.canceled-after-correction.json)
 
 ### W2 修订围栏
 
@@ -273,7 +273,7 @@ S2 隔离并取消在途调用。旧 grant 失效，S0 尽量维持仍安全的�
 | `FAILED` | 开度明确不足、错误物品已抓取、抽屉滑入危险区域或物品跌在抽屉外。 |
 | `UNKNOWN` | 到位后抽屉内部被遮挡，接触与手部状态不足以证明物品所处位置。安全地换视角或向用户求证。 |
 
-[封装能力示例](../../vla-harness/contracts/v1/examples/capability.open-drawer.json)
+[封装能力示例](../../policy-harness/contracts/v1/examples/capability.open-drawer.json)
 
 ### W3 分支、维持与撤出
 
@@ -356,9 +356,9 @@ Monitor → S2       给出保护范围；核心查询返回现时所有权与�
 
 实机档案修订 3 的惯性与足接触路径均未就绪；Resolver 阻止行走。若 Monitor 单独收到依赖该路径的测试简报，则是 UNSUPPORTED 或 PENDING_INPUT，不能报告 LOST。
 
-[行走简报](../../vla-harness/contracts/v1/examples/monitoring-brief.locomote.json)沿用修订 3 的资源布局，观测与操作策略来自独立的仿真部署。仿真专用运动包络 `simulation_only.walk.corridor@1` 与 `sim.walk.support@1` 只能用于该仿真部署。姿态子句先取得 `sim.walk.body.imu` 与 `sim.walk.body.foot_contact` 的有效样本（证据 `sim.walk.support.available`），进入 ARMED。随后足接触样本失效（`sim.walk.support.lost`），其余流仍可用；先请求 SLOW，再发[覆盖丢失中断](../../vla-harness/contracts/v1/examples/event.required-clause-coverage-lost.json)，以 inv.walk 定位，处置 CANCEL_AFFECTED。此部署不授予实机支撑资格。
+[行走简报](../../policy-harness/contracts/v1/examples/monitoring-brief.locomote.json)沿用修订 3 的资源布局，观测与操作策略来自独立的仿真部署。仿真专用运动包络 `simulation_only.walk.corridor@1` 与 `sim.walk.support@1` 只能用于该仿真部署。姿态子句先取得 `sim.walk.body.imu` 与 `sim.walk.body.foot_contact` 的有效样本（证据 `sim.walk.support.available`），进入 ARMED。随后足接触样本失效（`sim.walk.support.lost`），其余流仍可用；先请求 SLOW，再发[覆盖丢失中断](../../policy-harness/contracts/v1/examples/event.required-clause-coverage-lost.json)，以 inv.walk 定位，处置 CANCEL_AFFECTED。此部署不授予实机支撑资格。
 
-与停稳行分开核对两个基线分支：[行走中租约到期跌倒](../../vla-harness/contracts/v1/examples/event.baseline-fall-unknown-intent.json)发生在行走尚未结束时，意图 UNKNOWN，先前刷新已给出 exec.walk，保留的 brief.walk 记录用于 phase_contexts 定位。另在[空闲跌倒](../../vla-harness/contracts/v1/examples/event.baseline-fall-idle.json)中，无已知执行和阶段；该独立空闲试验没有简报记录，硬规则直达 S0。S2 暂停该身体待派队列，按 S0 回执实际范围封住重叠项并核对所有者和执行。
+与停稳行分开核对两个基线分支：[行走中租约到期跌倒](../../policy-harness/contracts/v1/examples/event.baseline-fall-unknown-intent.json)发生在行走尚未结束时，意图 UNKNOWN，先前刷新已给出 exec.walk，保留的 brief.walk 记录用于 phase_contexts 定位。另在[空闲跌倒](../../policy-harness/contracts/v1/examples/event.baseline-fall-idle.json)中，无已知执行和阶段；该独立空闲试验没有简报记录，硬规则直达 S0。S2 暂停该身体待派队列，按 S0 回执实际范围封住重叠项并核对所有者和执行。
 
 仿真行走阶段仍存活 → Monitor 重启，本地阶段记录为空且尚不知执行句柄 → 首次刷新前命中跌倒基线。尽管身体仍在行走，Monitor 可发双空中断，标记 UNKNOWN 并向 S0 请求保护。S2 先冻结该身体待派队列，取得 S0 回执后才依实际资源与当前所有权选择受影响的执行和 outbox 项。与此独立，若首份合格刷新在 S0 推进保护代际前到达，Monitor 按首发重新安装该存活阶段，建立新的本地布防历史；随后代际推进即结束旧阶段。若保护代际先推进，旧简报被拒绝。双空依据是 Monitor 的本地记录与句柄均为空，不以身体静止为条件。并行行走和抓取仍是未来授权用例。
 
