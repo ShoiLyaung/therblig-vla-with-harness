@@ -7,7 +7,7 @@
 - [ ] 能从同一目录行追到能力卡、训练动作维和 S0 维持态。
 - [ ] 一次取消的请求、接受、停稳及资源处置均能独立核对。
 - [ ] S2 校验当前意图与物理效果后才提交进度。
-- [ ] 三个系统与外部 Monitor 的四条控制／信号路径都有明确所有者。
+- [ ] 三个系统与外部 Monitor 的控制、信号及阶段简报路径都有明确所有者。
 - [ ] W1–W5 能解释并行、纠正、证据遮挡及受保护的恢复。
 - [ ] 对照 D1–D11，记录接受、修订或需要实测的依据。
 
@@ -20,10 +20,11 @@
 | 读者关心的问题 | 从哪里开始 | 对照材料 |
 |---|---|---|
 | 历史定义如何变成机器人标注 | [逐项分析](../../therblig-vla/docs/therblig-analysis.md) | [目录实例](../../therblig-vla/therbligs/catalog.v0.yaml) |
-| 策略能看什么、训练哪些轴 | [三套派生规则](../../therblig-vla/docs/derivations.md) | [目录结构](../../therblig-vla/therbligs/catalog.schema.json) |
+| 策略能看什么、训练哪些轴 | [四套派生规则](../../therblig-vla/docs/derivations.md) | [目录结构](../../therblig-vla/therbligs/catalog.schema.json) |
 | 如何在同一策略上运行不同子任务 | [S1 运行时](../../therblig-vla/docs/s1-design.md) | [能力契约](../../vla-harness/contracts/v1/schemas/capability.schema.json) |
 | 消息及幂等如何跨语言互通 | [协议草案](../../vla-harness/docs/protocol-v1.md) | [公共类型](../../vla-harness/contracts/v1/schemas/common.schema.json) |
 | 谁决定下一步和最终成败 | [Harness Core](../../vla-harness/docs/harness-design.md) | [验证对象](../../vla-harness/contracts/v1/schemas/verification.schema.json) |
+| S2 如何提供阶段意图 | [输入与阶段简报](s0-and-monitor.md#51-输入与阶段简报) | [类型化简报](../../vla-harness/contracts/v1/schemas/monitoring-brief.schema.json) |
 | 发生打断后身体怎样停稳 | [S0 与外部 Monitor](s0-and-monitor.md) | [事件契约](../../vla-harness/contracts/v1/schemas/event.schema.json) |
 | 抽屉开启与拿取如何并发 | [五个走通示例](walkthroughs.md) | [执行快照](../../vla-harness/contracts/v1/schemas/execution.schema.json) |
 
@@ -49,7 +50,7 @@ A 为《仿人五指灵巧手 RH56 系列用户手册》V1.0.9（2023-09，PRJ-0
 
 厂商 FAQ 将六个压力传感器的位置写为“分别位于每个微型伺服电缸的尾端”。官方文章说明采用力传感器方案，并与传统电流控制作了区分。连杆将负载传到电缸，RH56DFX 传感器读出轴向载荷。物体接触位置或手指构型变化都会改变读数。指端和指腹没有表面传感器，六路信号不能定位触点。[厂商 FAQ](https://www.inspire-robots.com/support/FAQ/dexterous%20hands/) · [厂商文章《灵巧手暗藏玄机，这些关键指标不容忽视》](https://www.inspire-robots.com/news/industry%20news/2024-12-27/247.html)
 
-A 列出 DF 与 BF，未出现型号字符串 DFX。`g1-inspire@2` 暂按 DF 核对寄存器和额定机械参数，具体单元仍待铭牌或厂商确认。
+A 列出 DF 与 BF，未出现型号字符串 DFX。`g1-inspire@3` 暂按 DF 核对寄存器和额定机械参数，具体单元仍待铭牌或厂商确认。
 
 | 项目 | 本体档案采用的硬件事实 |
 |---|---|
@@ -94,9 +95,10 @@ Correll 实验室让手指按压 Shimpo FGV-10XY 测力计，逐通道拟合 `F_
                          ↓  │
                      S0 身体控制器 ⇄ 机器人 / 仿真世界
 
+S2 → 外部 Monitor   阶段简报与周期刷新
 外部 Monitor ← 用户、身体、世界
 外部 Monitor → S0   本地保护请求及原因
-外部 Monitor → S2   状态、事件、interrupt
+外部 Monitor → S2   观测数据、带 interrupt 的 Event
 S2 Tool Interface → S0   可选、有界的 ModeRequest
 ```
 
@@ -110,7 +112,7 @@ S2 Tool Interface → S0   可选、有界的 ModeRequest
 
 S2 的图按任务事件推进。模型思考期间，Executor 仍可处理取消和对账。
 S1 按局部观测更新限时动作块。S0 在自己的本地周期执行稳态与限幅控制。
-Monitor 订阅活动调用以发现“当前正在接近错误对象”；目标修改权属于 S2。
+S2 在阶段开始推送最小意图子句。Monitor 根据当前有效简报核对错物趋近；目标修改权属于 S2。
 
 ### 一次调用跨越的边界
 
@@ -134,12 +136,13 @@ Monitor 订阅活动调用以发现“当前正在接近错误对象”；目标
 
 ## 从语义追到实物
 
-以右手把杯子送到架子为例，三个派生产物可以逐一对照。
+以右手把杯子送到架子为例，四个派生产物可以逐一对照。
 
 | 问题 | 使用的数据 | 具体结论 |
 |---|---|---|
 | S2 能委派什么 | 动素目录的 temporal_form、层、能力模板 | 选择搬运能力，参数绑定杯、目的地和已有握持 |
 | 策略能写哪里 | 选定右侧、可选腰和实际 grant | RA 激活，可选 W；RH 的手指不进入动作损失 |
+| 此阶段监测什么 | 目录的 monitoring 与当前调用绑定 | 核对持物手的滑移和载荷移动走廊 |
 | 身体必须保持什么 | 目录的 maintained 和 state_left | RH 保持 RETENTION，L 维持 BALANCE |
 | 到架子后谁接管 | S0 实测、维持令牌、后继入口条件 | S1 的放置子任务在支撑就绪后接管手部 |
 | 怎样知道完成 | 当前身份、支撑、脱手和目标版本 | 所有必要谓词成立时才提交进度 |
@@ -150,7 +153,7 @@ Monitor 订阅活动调用以发现“当前正在接近错误对象”；目标
 
 `E` 是头部相机观察轨。G1 没有主动颈关节。
 主动变更观察方向要申领 `W` 或 `L`，并考虑对其他活动分支视野的影响。
-RH56DFX 的每手六个驱动器与 G1 的 29 个本体自由度分别登记。`g1-inspire@2` 为每只手发布六路轴向载荷计数和独立电流通道，指面触觉阵列不可用。腕部相机仍待确认。[身体示例](../../vla-harness/contracts/v1/examples/body-profile.g1-inspire.json)
+RH56DFX 的每手六个驱动器与 G1 的 29 个本体自由度分别登记。`g1-inspire@3` 为每只手发布六路轴向载荷计数和独立电流通道，指面触觉阵列不可用。腕部相机仍待确认。[身体示例](../../vla-harness/contracts/v1/examples/body-profile.g1-inspire.json)
 
 ### 三类容易混淆的记录
 
@@ -183,6 +186,9 @@ S2 确认旧调用无法继续产生冲突指令，再按实测结果选择后�
 | 搬运期间维持握持 | [移动载荷](../../vla-harness/contracts/v1/examples/capability.move-payload.json) | 手依赖、驱动掩码与可选腰 |
 | 对机构做连续操作 | [封装能力](../../vla-harness/contracts/v1/examples/capability.open-drawer.json) | 一次受理的内部组合和接触退出态 |
 | 展开上层目标 | [可展开能力](../../vla-harness/contracts/v1/examples/capability.assemble-goal.json) | 子目标、依赖关系与组合效果 |
+| 阶段开始与刷新 | [首发](../../vla-harness/contracts/v1/examples/monitoring-brief.acquire.json)、[刷新](../../vla-harness/contracts/v1/examples/monitoring-brief.refresh-with-execution.json) | 同 ID 和内容摘要，补执行句柄及租约 |
+| 宽限到期 | [未布防中断](../../vla-harness/contracts/v1/examples/event.required-clause-unarmed-grace-expired.json) | 先收紧，无执行句柄时按调用定位 |
+| 普通话语 | [新增请求观测](../../vla-harness/contracts/v1/examples/observation.utterance-new-request.json) | 持久游标保存，S2 决定是否追加任务 |
 | 发起结构化调用 | [红杯调用](../../vla-harness/contracts/v1/examples/invocation.pick-red-cup.json) | 禁止目标、实体锚定和预期保护代际 |
 | 轮询执行 | [活动快照](../../vla-harness/contracts/v1/examples/execution.running.json) | 句柄、执行版本和授权到期时间 |
 | 纠正中的取消 | [取消快照](../../vla-harness/contracts/v1/examples/execution.canceled-after-correction.json) | 稳定证据及仍然受控的手部 |
@@ -197,7 +203,7 @@ HTTP 操作在评审通过后再绑定。[OpenAPI 占位文件](../../vla-harnes
 
 ## 决策登记
 
-D1–D8、D10、D11 已于 2026-11-28 按推荐方案裁决，内容不变。D9 仍在设计中，将单独规划；在此之前草案与示例沿用其推荐方案。
+D1–D8、D10、D11 已裁决。D9 按阶段简报方案起草，状态为设计中。
 
 | 编号 | 主题 | 推荐方案 | 状态 |
 |---|---|---|---|
@@ -209,7 +215,7 @@ D1–D8、D10、D11 已于 2026-11-28 按推荐方案裁决，内容不变。D9 
 | D6 | 资源仲裁 | 每身体一个 S0 仲裁器，五种轨道访问 | 已裁决（2026-11-28） |
 | D7 | 扩展动素 | 仅 x.locomote，开抽屉列为 Use | 已裁决（2026-11-28） |
 | D8 | 丢失创建回执 | 增加按 invocation_id 查询的只读端点 | 已裁决（2026-11-28） |
-| D9 | Monitor 的目标输入 | 订阅活动 invocation 的最小必要字段 | 设计中 |
+| D9 | Monitor 的阶段意图 | S2 单向推送租约简报并周期刷新，派发不等待 | 设计中 |
 | D10 | 保护分级与解除 | 可对账后取代两档软保护；锁存解除需要双条件 | 已裁决（2026-11-28） |
 | D11 | S0 代码归属 | 暂留两个可选归属，待适配边界和复用需求明确 | 已裁决（2026-11-28） |
 
@@ -267,12 +273,24 @@ S0 按轨做原子准入，检查同轴别名、耦合域和实际支持状态�
 推荐核心回查返回 PENDING、REJECTED、ADMITTED 或 ABSENT，以及可授权读取的 S0 实测与所有权。有执行句柄时再读原执行。
 备选是重放同键创建。幂等查重先于任何现场前置条件，保留原截止。ABSENT 只有在截止已过、重新读取的权威账本覆盖原窗口且核对了旧授权后，才足以排除晚启动。
 
-### D9 · 活动意图订阅
+### D9 · 阶段监测简报
 
-Monitor 接收实体锚定、禁选对象、活动轨、版本与有效期。
-通过主动调用获取意图会引入轮询时序与网络依赖。
-复制整个任务上下文会扩大暴露面，陈旧意图也更难发现。
-订阅中断时保留确定性保护，语义判断报告缺少意图依据。
+**设计中。** 推荐在可派发阶段开始时由 S2 单向推送类型化租约简报。观测数据继续供给 S2，需要重新评估时才发带 interrupt 的 Event。基线独立运行，周期刷新补偿丢包；必需子句确定失败或超过批准宽限时先收紧再中断；S2 对账后按原因决定是否可重派，S0 在 Monitor 心跳失联时按身体策略降级。连续丢包期间只剩基线，S2 无法获知空窗长度。
+
+| 议题 | 备选与取舍 |
+|---|---|
+| 意图形状 | 预批准 profile ID 加参数可缩小报文，但组合和部分支持难表述，适合登记表之下的实现。固定 invocation 投影片段只适合简单拾放，保留为迁移思路。 |
+| 送达 | 单次推送最简单，首发丢失或 Monitor 重启后整个阶段会缺意图；推荐存活时固定周期刷新。 |
+| 事件边界 | 取消无需中断的事件会遗漏普通指令和世界事实，或迫使它们触发复核；推荐以派生观测共享持久游标。 |
+| 逐子句确认 | 不采纳派发等待布防或 S0 核验布防凭证：会增加自身状态回传、耦合执行活性、把曾布防误读为受保护，还需跟踪实例、修订与陈旧回执。必需覆盖失败已有本地收紧与中断路径。 |
+| 语义上限 | 仅允许 SLOW 更保守，但错物接触可能需保持；推荐经规则层确认最多 SOFT_HOLD。 |
+| 人员交接 | 可暂不支持近人操作；推荐预先独立批准操作 profile，经 SWITCH_PROFILE 受理后仅可进一步收紧。当前档案未授权。 |
+
+待议：语义层做任务理解时是否需要预期效果等阶段意图。本轮用子句和可选 capability_ref 表达，不新增 intent 块。根 README 的“状态与事件”及图中方向仍按旧表述，待裁决后统一。
+
+无已知执行及阶段时，基线硬规则仍可发中断：意图 UNKNOWN、确定性 RULE、已登记基线规则、无失败子句、有关联保护且资源非空。S2 按身体与资源封住重叠待派项，并以 S0 回执对账。阶段相关中断继续要求可定位依据。
+
+本轮细化原计划的到期语义：到期仅撤下本地子句并返回 BASELINE。周期刷新重新送达后，同一快照可在认证、范围、代际、租约及本地释放检查通过后重新安装，沿用本 attempt 的宽限历史。只有终止围栏进入 ENDED。
 
 ### D10 · 保护等级
 
