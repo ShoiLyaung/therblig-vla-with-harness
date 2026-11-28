@@ -1,0 +1,109 @@
+scenario_id: B17
+revision: 草案一
+tier: B
+title: 传送带拾取
+baseline_refs:
+  root: 67c066d
+  harness: ed2eb4b
+  provider: 99b37bf
+  catalog: 0.2.0
+  body_profile: g1-inspire@3
+goal: 在允许窗口内获取指定移动物体
+success_definition: 目标轨迹、实际接触时刻和持物身份均满足当前任务
+authorization:
+  status: 当前本体未授权
+  scope: 移动目标入窗、实测轨迹时效与接触身份
+  reason: 缺经同步验证的动态跟踪与拦截变体
+  would_authorize: 批准跟踪时钟映射、有效期及启动时重新测量的守卫
+  provenance: [DATASHEET_DECLARED, NEEDS_VALIDATION]
+ambiguity: 空手追踪为 TE，获得控制边界才转 G；目标移动不是 LO
+phases:
+- id: track
+  goal: 预测目标入窗并选定实例
+  codes: [SH, FD, ST]
+  capability: 动态跟踪（待建）
+  s0_modes: BALANCE
+  verification: 记录观测时刻与轨迹有效性
+  monitor_need: 身份切换
+  authorization: 当前本体未授权
+  coverage: 需要但被阻塞
+  fault_refs: []
+  authorization_note: 移动目标入窗、实测轨迹时效与接触身份：缺经同步验证的动态跟踪与拦截变体
+- id: intercept
+  goal: 带时序守卫获取移动物
+  codes: [TE, G, H]
+  capability: 动态拦截（待建）
+  s0_modes: COMPLIANCE、RETENTION
+  verification: 在有效窗口建立同一目标的控制
+  monitor_need: 错过拦截窗口
+  authorization: 当前本体未授权
+  coverage: 需要但被阻塞
+  fault_refs: [F17]
+  authorization_note: 移动目标入窗、实测轨迹时效与接触身份：缺经同步验证的动态跟踪与拦截变体
+faults:
+- id: F17
+  at_boundary: intercept
+  injection: 跟踪流在选择后、激活前过期
+  expected_records: [Resolver 或 S0 拒绝过期进入, 不产生新驱动, 重新获取轨迹]
+  ordering: [实测新鲜性先于激活]
+  forbidden_outcomes: [以未超过调用截止代替轨迹有效]
+monitor_needs:
+- mr: MR-07
+  concern: 跟踪流在选择后、激活前过期
+  evidence: 采集时钟、运动轨迹与有效窗口
+  d9: generic/progress_duration@1
+  maximum: SOFT_HOLD
+- mr: MR-01
+  concern: 独立基线核验跌倒、碰撞或危险闯入
+  evidence: 合格的本体／世界证据与 S0 实际保护回执
+  d9: baseline/fall@1（其他危险依部署登记的基线硬规则）
+  maximum: STOP_LATCHED
+- mr: MR-03
+  concern: 运动离开本阶段批准走廊
+  evidence: 参考系一致的姿态、方向与扫掠区
+  d9: generic/motion_envelope@1
+  maximum: SLOW
+gap_refs: [M07, E05, M01]
+coverage:
+  components:
+    Planner: 不涉及
+    Context: 已覆盖
+    Memory: 不涉及
+    ToolInterface: 已覆盖
+    Resolver: 已覆盖
+    Executor: 不涉及
+    Verifier: 已覆盖
+    S1: 需要但被阻塞
+    S0: 已覆盖
+    Monitor: 已覆盖
+    Protocol: 已覆盖
+    BodyProfile: 需要但被阻塞
+  perception:
+    头部视觉: 已覆盖
+    关节位姿: 已覆盖
+    手部轴向计数: 已覆盖
+    电流代理: 不涉及
+    深度: 不涉及
+    点云: 不涉及
+    语音: 不涉及
+    惯性: 不涉及
+    足接触: 不涉及
+    液位与溢出: 不涉及
+    材料损伤: 不涉及
+    接收者承载: 不涉及
+    柔性地标: 不涉及
+    接口就位与扭矩: 不涉及
+    可读标签: 不涉及
+    动态目标轨迹: 需要但被阻塞
+    外部载荷与张力: 不涉及
+    工作区可见范围: 不涉及
+protocol_checks:
+- object: Invocation
+  fields: [observation_refs, start_deadline]
+  criterion: 起动前重新检查目标时效
+- object: Execution
+  fields: [started_at]
+  criterion: 只证明启动时刻
+- object: Verification
+  fields: [predicates]
+  criterion: 以接触时的物理身份证实

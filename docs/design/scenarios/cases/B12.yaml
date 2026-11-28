@@ -1,0 +1,111 @@
+scenario_id: B12
+revision: 草案一
+tier: B
+title: 开门并通过
+baseline_refs:
+  root: 67c066d
+  harness: ed2eb4b
+  provider: 99b37bf
+  catalog: 0.2.0
+  body_profile: g1-inspire@3
+goal: 通过一扇可能回弹的门
+success_definition: 本体全部离开门的扫掠区且支撑稳定
+authorization:
+  status: 当前本体未授权
+  scope: 开门保持、门体回弹及通过时动态支撑
+  reason: 行走仿真已覆盖、实机受阻；移动中维持开门与动态支撑无批准组合
+  would_authorize: 验证门止挡或独立协调变体、步态支撑与退出守卫
+  provenance: [DATASHEET_DECLARED, NEEDS_VALIDATION]
+ambiguity: 开门以机构功能记 U；通过是 LO，维持门位需独立保持轨
+phases:
+- id: open
+  goal: 操作门并核验止挡
+  codes: [U, H]
+  capability: 开门技能（待建）
+  s0_modes: COMPLIANCE、POSE_HOLD
+  verification: 确认止挡有效或持续扶持
+  monitor_need: 开度与回弹
+  authorization: 当前本体未授权
+  coverage: 需要但被阻塞
+  fault_refs: []
+  authorization_note: 开门保持、门体回弹及通过时动态支撑：行走仿真已覆盖、实机受阻；移动中维持开门与动态支撑无批准组合
+- id: pass
+  goal: 穿过开口并退出
+  codes: [x.locomote, I]
+  capability: locomote（模板）
+  s0_modes: LOCOMOTION_TRACKING、BALANCE
+  verification: 实测全身清空；遮挡时不能撤扶持
+  monitor_need: 回弹与腿部冲突
+  authorization: 当前本体未授权
+  coverage: 需要但被阻塞
+  fault_refs: [F12]
+  authorization_note: 开门保持、门体回弹及通过时动态支撑：行走仿真已覆盖、实机受阻；移动中维持开门与动态支撑无批准组合
+faults:
+- id: F12
+  at_boundary: pass
+  injection: 穿越时门回弹
+  expected_records: [S0 按耦合范围保护, Executor 隔离腿与仍依赖门位的分支]
+  ordering: [测得清空先于释放扶持]
+  forbidden_outcomes: [把曾经开过门当作当前安全通行]
+monitor_needs:
+- mr: MR-03
+  concern: 穿越时门回弹
+  evidence: 门角变化与本体扫掠区
+  d9: generic/motion_envelope@1
+  maximum: STOP_LATCHED
+- mr: MR-01
+  concern: 独立基线核验跌倒、碰撞或危险闯入
+  evidence: 合格的本体／世界证据与 S0 实际保护回执
+  d9: baseline/fall@1（其他危险依部署登记的基线硬规则）
+  maximum: STOP_LATCHED
+- mr: MR-04
+  concern: 支撑或载荷改变后姿态不稳
+  evidence: 独立合格的惯性与支撑证据
+  d9: generic/posture_balance@1
+  maximum: STOP_LATCHED
+- mr: MR-07
+  concern: 停滞、超窗或屏障等待
+  evidence: 实测进展及当前阶段的时钟依据
+  d9: generic/progress_duration@1
+  maximum: REEVALUATE
+gap_refs: [E04, C02, M01]
+coverage:
+  components:
+    Planner: 已覆盖
+    Context: 不涉及
+    Memory: 不涉及
+    ToolInterface: 已覆盖
+    Resolver: 已覆盖
+    Executor: 已覆盖
+    Verifier: 已覆盖
+    S1: 需要但被阻塞
+    S0: 需要但被阻塞
+    Monitor: 已覆盖
+    Protocol: 已覆盖
+    BodyProfile: 需要但被阻塞
+  perception:
+    头部视觉: 已覆盖
+    关节位姿: 已覆盖
+    手部轴向计数: 已覆盖
+    电流代理: 不涉及
+    深度: 不涉及
+    点云: 不涉及
+    语音: 不涉及
+    惯性: 需要但被阻塞
+    足接触: 需要但被阻塞
+    液位与溢出: 不涉及
+    材料损伤: 不涉及
+    接收者承载: 不涉及
+    柔性地标: 不涉及
+    接口就位与扭矩: 不涉及
+    可读标签: 不涉及
+    动态目标轨迹: 不涉及
+    外部载荷与张力: 不涉及
+    工作区可见范围: 需要但被阻塞
+protocol_checks:
+- object: BodyProfile
+  fields: [compatible_combinations]
+  criterion: 动态扶持缺失即阻塞
+- object: Result
+  fields: [quiescence, resource_dispositions]
+  criterion: 通行后核对全身退出

@@ -1,0 +1,106 @@
+scenario_id: B09
+revision: 草案一
+tier: B
+title: 插头或 USB 插入
+baseline_refs:
+  root: 67c066d
+  harness: ed2eb4b
+  provider: 99b37bf
+  catalog: 0.2.0
+  body_profile: g1-inspire@3
+goal: 对准接口后插入到位
+success_definition: 几何就位且所需功能检查通过
+authorization:
+  status: 当前本体未授权
+  scope: 插头键位、配合轴过载证据与端口功能确认
+  reason: 无已验证的插入轴向力或接口就位证据
+  would_authorize: 验证插头专用姿态、力路径和功能判据
+  provenance: [DATASHEET_DECLARED, NEEDS_VALIDATION, THIRD_PARTY_MEASURED, UNCALIBRATED]
+ambiguity: P 到轴线对准即止；开始配合后是 A，未推进不能反复加力
+phases:
+- id: align
+  goal: 辨别方向和键位
+  codes: [I, P]
+  capability: align_for_use（模板）
+  s0_modes: COMPLIANCE、RETENTION
+  verification: 键位和接口轴线在同一参考系内匹配
+  monitor_need: 接口遮挡
+  authorization: 条件授权
+  coverage: 已覆盖
+  fault_refs: []
+  authorization_note: 键位和接口轴线在同一参考系内匹配
+- id: mate
+  goal: 配合与功能检查
+  codes: [A, I]
+  capability: 插入变体（待建）
+  s0_modes: COMPLIANCE
+  verification: 插深与功能同时通过；仅有电机终态记 UNKNOWN
+  monitor_need: 阻滞与过载
+  authorization: 当前本体未授权
+  coverage: 需要但被阻塞
+  fault_refs: [F09]
+  authorization_note: 插头键位、配合轴过载证据与端口功能确认：无已验证的插入轴向力或接口就位证据
+faults:
+- id: F09
+  at_boundary: mate
+  injection: 插深停滞并出现过载趋势
+  expected_records: [记录停止、接触处置, 功能状态 UNKNOWN]
+  ordering: [保护及实际处置先于结构化撤回]
+  forbidden_outcomes: [用手部轴向计数推断插头轴向力]
+monitor_needs:
+- mr: MR-05
+  concern: 插深停滞并出现过载趋势
+  evidence: 插深与独立轴向工装证据
+  d9: generic/contact_force_envelope@1
+  maximum: SOFT_HOLD
+- mr: MR-01
+  concern: 独立基线核验跌倒、碰撞或危险闯入
+  evidence: 合格的本体／世界证据与 S0 实际保护回执
+  d9: baseline/fall@1（其他危险依部署登记的基线硬规则）
+  maximum: STOP_LATCHED
+- mr: MR-07
+  concern: 停滞、超窗或屏障等待
+  evidence: 实测进展及当前阶段的时钟依据
+  d9: generic/progress_duration@1
+  maximum: REEVALUATE
+gap_refs: [E01, C01, M01]
+coverage:
+  components:
+    Planner: 不涉及
+    Context: 不涉及
+    Memory: 不涉及
+    ToolInterface: 不涉及
+    Resolver: 已覆盖
+    Executor: 不涉及
+    Verifier: 已覆盖
+    S1: 需要但被阻塞
+    S0: 需要但被阻塞
+    Monitor: 已覆盖
+    Protocol: 已覆盖
+    BodyProfile: 需要但被阻塞
+  perception:
+    头部视觉: 已覆盖
+    关节位姿: 已覆盖
+    手部轴向计数: 已覆盖
+    电流代理: 不涉及
+    深度: 不涉及
+    点云: 不涉及
+    语音: 不涉及
+    惯性: 不涉及
+    足接触: 不涉及
+    液位与溢出: 不涉及
+    材料损伤: 不涉及
+    接收者承载: 不涉及
+    柔性地标: 不涉及
+    接口就位与扭矩: 需要但被阻塞
+    可读标签: 不涉及
+    动态目标轨迹: 不涉及
+    外部载荷与张力: 需要但被阻塞
+    工作区可见范围: 不涉及
+protocol_checks:
+- object: Capability
+  fields: [semantics]
+  criterion: 配合轴与工具证据匹配
+- object: Verification
+  fields: [predicates]
+  criterion: 功能就位独立检查

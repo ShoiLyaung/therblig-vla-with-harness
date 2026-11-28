@@ -1,0 +1,506 @@
+scenario_id: A05
+revision: 草案一
+tier: A
+title: 把壶中液体倒入杯内
+baseline_refs:
+  root: 67c066d
+  harness: ed2eb4b
+  provider: 99b37bf
+  catalog: 0.2.0
+  body_profile: g1-inspire@3
+goal: 从已标识的壶向目标杯倾倒，到达目标液位后将壶放回
+success_definition: 杯内液位符合目标标准、无可见溢出、壶直立且有支撑
+authorization:
+  status: 当前本体未授权
+  scope: 倾倒时液位、溢出及偏载包络；普通站姿壶柄获取单独审查
+  reason: 没有已发布的倾倒卡、液位验证路径及批准的偏载包络
+  would_authorize: 取得液位与溢出证据标准、匹配载荷工况及倾倒变体审批
+  provenance: [DATASHEET_DECLARED, NEEDS_VALIDATION, THIRD_PARTY_MEASURED, UNCALIBRATED]
+ambiguity: 倾壶使液体转移标 U；倾倒前对准杯口才是 P。减轻的轴向载荷不能独立证明液体进入目标杯
+phases:
+- id: plan
+  goal: 将倒水目标展开为具体验证点
+  capability: s2.expand
+  s0_modes: BALANCE
+  verification: 目标杯与液位标准已绑定
+  monitor_need: MR-06
+  authorization: 条件授权
+  codes: [PN]
+  coverage: 已覆盖
+  fault_refs: []
+  authorization_note: 仅目标分解
+- id: pick
+  goal: 获取壶柄
+  capability: acquire_object
+  s0_modes: hand.acquire_slow
+  verification: 壶柄身份与接触分别确认
+  monitor_need: MR-05
+  authorization: 条件授权
+  codes: [G]
+  coverage: 已覆盖
+  fault_refs: []
+  authorization_note: 静态获取壶柄，须核对工况
+- id: carry
+  goal: 载壶到杯口上方
+  capability: move_payload
+  s0_modes: RETENTION
+  verification: 壶体到达且路径清空
+  monitor_need: MR-03
+  authorization: 条件授权
+  codes: [TL, H]
+  coverage: 已覆盖
+  fault_refs: []
+  authorization_note: 站姿且偏载仍在既有搬运包络内
+- id: transfer
+  goal: 递归展开杯口对准、倾倒及回正
+  capability: s2.expand
+  s0_modes: BALANCE
+  verification: 液位标准、杯口与壶嘴已绑定
+  monitor_need: MR-06
+  authorization: 条件授权
+  codes: [PN, H]
+  coverage: 已覆盖
+  fault_refs: []
+  authorization_note: 仅图展开并保持已核准的壶柄令牌
+- id: align
+  goal: 对准当前杯口
+  capability: align_for_use
+  s0_modes: COMPLIANCE
+  verification: 壶嘴与杯口关系合格
+  monitor_need: MR-03
+  authorization: 条件授权
+  codes: [P, H]
+  coverage: 已覆盖
+  fault_refs: []
+  authorization_note: 仅静态杯口定位、对位；不授权倾倒
+- id: pour
+  goal: 控制倾角与回正
+  capability: pour_liquid
+  s0_modes: RETENTION、COMPLIANCE
+  verification: 液位与溢出分别验证
+  monitor_need: MR-06
+  authorization: 当前本体未授权
+  codes: [U, H]
+  coverage: 需要但被阻塞
+  fault_refs: [F05, F05b]
+  authorization_note: 液位与溢出分别验证
+- id: restage
+  goal: 将回正的壶预置于原支撑区
+  capability: stage_for_next_use
+  s0_modes: RETENTION
+  verification: 流已停止，壶底与支撑区域已对准
+  monitor_need: MR-05
+  authorization: 条件授权
+  codes: [PP, H]
+  coverage: 需要但被阻塞
+  fault_refs: []
+  authorization_note: 已回正且停止流动的条件下预置；本任务实际前驱倾倒受阻
+- id: rest
+  goal: 确认支撑后卸载
+  capability: release_to_support
+  s0_modes: COMPLIANCE
+  verification: 壶直立、受支撑且手已脱离
+  monitor_need: MR-05
+  authorization: 条件授权
+  codes: [RL]
+  coverage: 需要但被阻塞
+  fault_refs: []
+  authorization_note: 独立证实支撑后接管；本任务实际前驱倾倒受阻
+faults:
+- id: F05
+  at_boundary: pour
+  injection: 壶嘴遮住液面且托盘出现液滴
+  expected_records: [S1 保留姿态及观测来源, Verifier 将目标液位谓词记 UNKNOWN；尚未证实托盘液滴越界]
+  ordering: [确认安全停止倾倒先于换视角, 补证后再决定是否继续]
+  forbidden_outcomes: [凭壶重量下降提交达标, 盲目追加倾倒]
+- id: F05b
+  at_boundary: pour
+  injection: 独立托盘观测证实溢出越界，目标液面仍被遮挡
+  expected_records: [液位谓词 UNKNOWN, 无越界溢出谓词 FALSE, 本段 effect_holds 为 FALSE，verdict 为 FAILED]
+  ordering: [取得越界反证先于失败判定]
+  forbidden_outcomes: [以一个未知液位谓词覆盖已证实的反证]
+monitor_needs:
+- mr: MR-03
+  concern: 倾角偏离批准包络
+  evidence: 壶体姿态、杯口几何
+  d9: generic/motion_envelope@1
+  maximum: SLOW
+- mr: MR-05
+  concern: 握持滑移与正常减载混淆
+  evidence: 指位、相对运动与载荷趋势
+  d9: generic/contact_force_envelope@1
+  maximum: SOFT_HOLD
+- mr: MR-06
+  concern: 液体溢出
+  evidence: 不同新帧的溢出证据，逐项批准的视觉持续策略
+  d9: generic/people_workspace@1
+  maximum: SOFT_HOLD
+- mr: MR-01
+  concern: 独立基线核验跌倒、碰撞或危险闯入
+  evidence: 合格的本体／世界证据与 S0 实际保护回执
+  d9: baseline/fall@1（其他危险依部署登记的基线硬规则）
+  maximum: STOP_LATCHED
+- mr: MR-02
+  concern: 对象锚点、参考图像与当前接近对象不符
+  evidence: 独立的实例定位与当前运动方向
+  d9: generic/target_identity@1
+  maximum: SOFT_HOLD
+- mr: MR-04
+  concern: 支撑或载荷改变后姿态不稳
+  evidence: 独立合格的惯性与支撑证据
+  d9: generic/posture_balance@1
+  maximum: STOP_LATCHED
+gap_refs: [M02, C01, M01]
+coverage:
+  components:
+    Planner: 已覆盖
+    Context: 已覆盖
+    Memory: 已覆盖
+    ToolInterface: 已覆盖
+    Resolver: 已覆盖
+    Executor: 已覆盖
+    Verifier: 已覆盖
+    S1: 需要但被阻塞
+    S0: 需要但被阻塞
+    Monitor: 已覆盖
+    Protocol: 已覆盖
+    BodyProfile: 需要但被阻塞
+  perception:
+    头部视觉: 已覆盖
+    关节位姿: 已覆盖
+    手部轴向计数: 已覆盖
+    电流代理: 不涉及
+    深度: 不涉及
+    点云: 不涉及
+    语音: 不涉及
+    惯性: 需要但被阻塞
+    足接触: 不涉及
+    液位与溢出: 需要但被阻塞
+    材料损伤: 不涉及
+    接收者承载: 不涉及
+    柔性地标: 不涉及
+    接口就位与扭矩: 不涉及
+    可读标签: 不涉及
+    动态目标轨迹: 不涉及
+    外部载荷与张力: 不涉及
+    工作区可见范围: 需要但被阻塞
+extends_walkthrough: 独立用例
+dag:
+  nodes:
+  - id: plan
+    phase: plan
+    gate: 任务修订、目标杯与液位标准已确认
+    composition: EXPANDABLE
+    depends_on: []
+    parallel_group: 无
+    parent: 无
+  - id: pick
+    phase: pick
+    gate: 壶柄身份、握取包络与接近条件成立
+    composition: ATOMIC
+    depends_on: [plan]
+    parallel_group: 无
+    parent: plan
+  - id: carry
+    phase: carry
+    gate: 壶柄保持令牌有效且载荷组合获准
+    composition: ATOMIC
+    depends_on: [pick]
+    parallel_group: 无
+    parent: plan
+  - id: transfer
+    phase: transfer
+    gate: 已至杯旁，液位与溢出观测路径已按本变体验证
+    composition: EXPANDABLE
+    depends_on: [carry]
+    parallel_group: 无
+    parent: plan
+  - id: align
+    phase: align
+    gate: 壶与杯口身份新鲜且姿态可比较
+    composition: ATOMIC
+    depends_on: [transfer]
+    parallel_group: 无
+    parent: transfer
+  - id: pour
+    phase: pour
+    gate: 杯口对位通过且模拟倾倒工况获准
+    composition: PROVIDER_COMPOSITE
+    depends_on: [align]
+    parallel_group: 无
+    parent: transfer
+  - id: restage
+    phase: restage
+    gate: 流已停止且壶已回正，原支撑区域可见
+    composition: ATOMIC
+    depends_on: [pour]
+    parallel_group: 无
+    parent: plan
+  - id: rest
+    phase: rest
+    gate: 已确认支撑，右手接管路径有效
+    composition: ATOMIC
+    depends_on: [restage]
+    parallel_group: 无
+    parent: plan
+  replan_trigger: 溢出或液位未知转入回正与安全检查子图
+capabilities:
+- name: s2.expand
+  status: 内部节点
+  reference: vla-harness/docs/harness-design.md
+  requirements: 入口：任务修订、目标杯与液位标准已确认。退出检查：目标杯与液位标准已绑定；入口：已至杯旁，液位与溢出观测路径已按本变体验证。退出检查：液位标准、杯口与壶嘴已绑定
+- name: acquire_object
+  status: 已有卡
+  reference: vla-harness/contracts/v1/examples/capability.acquire-object.json
+  requirements: 入口：壶柄身份、握取包络与接近条件成立。退出检查：壶柄身份与接触分别确认
+- name: move_payload
+  status: 已有卡
+  reference: vla-harness/contracts/v1/examples/capability.move-payload.json
+  requirements: 入口：壶柄保持令牌有效且载荷组合获准。退出检查：壶体到达且路径清空
+- name: align_for_use
+  status: 目录模板
+  reference: therblig-vla/therbligs/catalog.v0.yaml
+  requirements: 入口：壶与杯口身份新鲜且姿态可比较。退出检查：壶嘴与杯口关系合格
+- name: pour_liquid
+  status: 需新建
+  reference: 待发布
+  requirements: 入口：杯口对位通过且模拟倾倒工况获准。退出检查：液位与溢出分别验证
+- name: release_to_support
+  status: 目录模板
+  reference: therblig-vla/therbligs/catalog.v0.yaml
+  requirements: 入口：已确认支撑，右手接管路径有效。退出检查：壶直立、受支撑且手已脱离
+- name: stage_for_next_use
+  status: 目录模板
+  reference: therblig-vla/therbligs/catalog.v0.yaml
+  requirements: 入口：流已停止且壶已回正，原支撑区域可见。退出检查：流已停止，壶底与支撑区域已对准
+simo:
+- phase: plan
+  lanes:
+    E: {label: 观察, owner: S1, access: OBSERVE, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    S2: {label: PN, owner: S2, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    MON: {label: 基线, owner: MON, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    LA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    LH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    W: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    L: {label: 平衡, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+- phase: pick
+  lanes:
+    E: {label: 观察, owner: S1, access: OBSERVE, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    S2: {label: 任务记录, owner: S2, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    MON: {label: 基线, owner: MON, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    LA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RA: {label: G, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    LH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RH: {label: G, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    W: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    L: {label: 平衡, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+- phase: carry
+  lanes:
+    E: {label: 观察, owner: S1, access: OBSERVE, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    S2: {label: 任务记录, owner: S2, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    MON: {label: 基线, owner: MON, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    LA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RA: {label: TL, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    LH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RH: {label: H, owner: S0, access: DEPEND, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    W: {label: TL, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    L: {label: 平衡, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+- phase: transfer
+  lanes:
+    E: {label: 观察, owner: S1, access: OBSERVE, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    S2: {label: PN, owner: S2, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    MON: {label: 基线, owner: MON, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    LA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    LH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RH: {label: H, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    W: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    L: {label: 平衡, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+- phase: align
+  lanes:
+    E: {label: 观察, owner: S1, access: OBSERVE, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    S2: {label: 任务记录, owner: S2, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    MON: {label: 基线, owner: MON, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    LA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RA: {label: P, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    LH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RH: {label: H, owner: S0, access: DEPEND, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    W: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    L: {label: 平衡, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+- phase: pour
+  lanes:
+    E: {label: 观察, owner: S1, access: OBSERVE, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    S2: {label: 任务记录, owner: S2, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    MON: {label: 基线, owner: MON, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    LA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RA: {label: U, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    LH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RH: {label: H, owner: S0, access: DEPEND, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    W: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    L: {label: 平衡, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+- phase: restage
+  lanes:
+    E: {label: 观察, owner: S1, access: OBSERVE, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    S2: {label: 任务记录, owner: S2, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    MON: {label: 基线, owner: MON, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    LA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RA: {label: PP, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    LH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RH: {label: H, owner: S0, access: DEPEND, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    W: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    L: {label: 平衡, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+- phase: rest
+  lanes:
+    E: {label: 观察, owner: S1, access: OBSERVE, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    S2: {label: 任务记录, owner: S2, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    MON: {label: 基线, owner: MON, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    LA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RA: {label: RL, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    LH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RH: {label: RL, owner: S1, access: TAKEOVER, observation_mask: 按新鲜有效通道, action_mask: 接管后授权轴, missing_mask: 无效或饱和通道屏蔽}
+    W: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    L: {label: 平衡, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+occupancy:
+- phase: plan
+  resources: E:OBSERVE、L:MAINTAINED
+  combination: 无身体写入
+  handoff: 只生成子图
+- phase: pick
+  resources: E:OBSERVE、RA:DRIVE、RH:DRIVE、L:MAINTAINED
+  combination: 单臂准入
+  handoff: 保持令牌绑定壶
+- phase: carry
+  resources: E:OBSERVE、RA:DRIVE、RH:DEPEND、W:DRIVE、L:MAINTAINED
+  combination: carry-with-support
+  handoff: 搬运期间保持手部
+- phase: transfer
+  resources: RH:MAINTAINED、L:MAINTAINED、E:OBSERVE；S2 展开子图
+  combination: 无身体写入
+  handoff: 原壶柄保持跨越展开，不生成新 grant
+- phase: align
+  resources: E:OBSERVE、RA:DRIVE、RH:DEPEND、L:MAINTAINED
+  combination: 需要当前杯口容差
+  handoff: 沿用壶柄保持
+- phase: pour
+  resources: E:OBSERVE、RA:DRIVE、RH:DEPEND、L:MAINTAINED
+  combination: 需批准偏载包络
+  handoff: 壶回正后检查流已停止
+- phase: restage
+  resources: E:OBSERVE、RA:DRIVE、RH:DEPEND、L:MAINTAINED
+  combination: 站姿单臂准入
+  handoff: 保留 RH 依赖
+- phase: rest
+  resources: E:OBSERVE、RA:DRIVE、RH:TAKEOVER、L:MAINTAINED
+  combination: 带撤出变体独立核准
+  handoff: 接管并消费令牌
+checkpoints:
+- phase: align
+  SUCCESS: 杯口和壶嘴位置同步可见
+  FAILED: 壶嘴对准其他容器
+  UNKNOWN: 遮挡导致杯口候选不唯一
+  recovery: 维持直立并补证
+- phase: pour
+  SUCCESS: 目标杯液位达标且溢出检查通过
+  FAILED: 确认流入错误容器或越界洒出
+  UNKNOWN: 只有壶体减载、液面不可见
+  recovery: 确认流已停，对杯与托盘分别取证
+- phase: rest
+  SUCCESS: 壶已由原支撑面承载且脱手
+  FAILED: 壶倾倒或仍挂在手上
+  UNKNOWN: 支撑面不可见
+  recovery: 复核支撑与手部处置
+context: [分别记录源壶、目标杯、目标液位标准与托盘范围, 壶姿变化使旧液位读数过期]
+memory: [保留首次倾倒与回正的观测窗口、溢出区域和补证修订]
+training:
+  labels: [PN, G, TL, H, P, U, PP, RL]
+  masks: [E 与 MON 无动作目标, 按实际 grant 展开轴，观测缺失另设掩码]
+  simulation: 液面遮挡、正常减载与滑移分开注入
+  teleoperation: 记录真实反光、挂液与回正后的残流用于评估
+  cross_embodiment: 迁移臂部对位，液体动力学和力通道单独验证
+test_vectors:
+- given: [目标杯液面被挡，托盘液滴尚未确认为越界。本向量只评价液位谓词；若独立证实越界，整段 effect_holds 为 FALSE，verdict 为 FAILED。]
+  when: F05
+  expected_records: [S1 保留姿态及观测来源, Verifier 将目标液位谓词记 UNKNOWN；尚未证实托盘液滴越界]
+  ordering: [确认安全停止倾倒先于换视角, 补证后再决定是否继续]
+  forbidden_outcomes: [凭壶重量下降提交达标, 盲目追加倾倒]
+  assertions:
+  - alias: level
+    record_type: 观测质量
+    path: /液面
+    equals: 遮挡
+    source: 适配器
+    record: level
+  - alias: check
+    record_type: Verification
+    path: /predicates/0/value
+    equals: UNKNOWN
+    source: 协议
+    record: check
+  - alias: criterion
+    source: 协议
+    record_type: Verification
+    record: check
+    path: /predicates/0/predicate/id
+    equals: generic/target_level@1
+  before:
+  - first: level
+    then: check
+- given: [杯中液面遮挡，托盘边界与反证观测已独立核对。]
+  when: F05b
+  assertions:
+  - alias: spill
+    source: 适配器
+    record: tray
+    record_type: 托盘观测
+    path: /越界
+    equals: 已证实
+  - alias: liquid
+    source: 协议
+    record_type: Verification
+    record: check
+    path: /predicates/0/value
+    equals: UNKNOWN
+  - alias: no_spill
+    source: 协议
+    record_type: Verification
+    record: check
+    path: /predicates/1/value
+    equals: 'FALSE'
+  - alias: effect
+    source: 协议
+    record_type: Verification
+    record: check
+    path: /checks/effect_holds
+    equals: 'FALSE'
+  - alias: failed
+    source: 协议
+    record_type: Verification
+    record: check
+    path: /verdict
+    equals: FAILED
+  before:
+  - first: spill
+    then: failed
+  expected_records: [液位谓词 UNKNOWN, 无越界溢出谓词 FALSE, 本段 effect_holds 为 FALSE，verdict 为 FAILED]
+  ordering: [取得越界反证先于失败判定]
+  forbidden_outcomes: [以一个未知液位谓词覆盖已证实的反证]
+evidence_refs:
+- vla-harness/contracts/v1/examples/capability.acquire-object.json
+- vla-harness/contracts/v1/examples/capability.move-payload.json
+- vla-harness/contracts/v1/examples/verification.unknown-occluded.json
+- vla-harness/contracts/v1/examples/body-profile.g1-inspire.json
+protocol_checks:
+- object: Capability
+  fields: [parameter_schema, result_schema]
+  criterion: 冻结容器、目标杯与标准
+- object: Result
+  fields: [outputs, evidence]
+  criterion: 液位、溢出及回正是独立事实
+- object: Verification
+  fields: [predicates, verdict]
+  criterion: 遮挡保留未知
+verification_boundaries:
+  phases: [align, pour, rest]
+  terminal_success: rest

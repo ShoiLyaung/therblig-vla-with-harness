@@ -1,0 +1,322 @@
+scenario_id: A06
+revision: 草案一
+tier: A
+title: 抓取易碎食材
+baseline_refs:
+  root: 67c066d
+  harness: ed2eb4b
+  provider: 99b37bf
+  catalog: 0.2.0
+  body_profile: g1-inspire@3
+goal: 在闭合过冲受限的工况下拾取鸡蛋、草莓或豆腐
+success_definition: 身份正确、脱离原支撑、保持稳定，并以食材专用标准证实完整
+authorization:
+  status: 当前本体未授权
+  scope: 材料专用窄力窗与损伤验证
+  reason: 轴向力随接触位置变化；无名指、小指和拇指旋转未标定，没有本机逐手通道绝对力批准；right.hand.tactile.available=false，无指面触觉阵列，轴向计数不能定位接触
+  would_authorize: 选择明确接受相对计数的材料变体并验证完整性，或取得要求绝对力的逐手逐通道批准
+  provenance: [DATASHEET_DECLARED, THIRD_PARTY_MEASURED, UNCALIBRATED, NEEDS_VALIDATION]
+ambiguity: G 结束于取得控制；I 依据材料标准看裂纹、压痕或破碎，不能从 G 的终态代推
+phases:
+- id: bind
+  goal: 选定食材与损伤标准
+  capability: s2.select
+  s0_modes: BALANCE
+  verification: 实例和标准可区分
+  monitor_need: MR-02
+  authorization: 条件授权
+  codes: [ST]
+  coverage: 已覆盖
+  fault_refs: []
+  authorization_note: 只绑定候选身份与材料标准
+- id: grasp
+  goal: 按材料窄窗低速闭合
+  capability: fragile_acquire
+  s0_modes: hand.acquire_slow
+  verification: 入口证据覆盖实际承载通道
+  monitor_need: MR-05
+  authorization: 当前本体未授权
+  codes: [G]
+  coverage: 需要但被阻塞
+  fault_refs: [F06a]
+  authorization_note: 入口证据覆盖实际承载通道
+- id: lift
+  goal: 抬离原支撑
+  capability: move_payload
+  s0_modes: RETENTION
+  verification: 物件随手而非留在台面
+  monitor_need: MR-05
+  authorization: 条件授权
+  codes: [TL, H]
+  coverage: 需要但被阻塞
+  fault_refs: []
+  authorization_note: 仅假设已取得合格材料保持令牌的后继；不放行本例受阻的获取
+- id: inspect
+  goal: 核对外观及内部可见范围
+  capability: measure_condition
+  s0_modes: RETENTION
+  verification: 损伤标准与可见证据对应
+  monitor_need: MR-05
+  authorization: 当前本体未授权
+  codes: [I, H]
+  coverage: 需要但被阻塞
+  fault_refs: [F06b]
+  authorization_note: 损伤标准与可见证据对应
+faults:
+- id: F06a
+  at_boundary: grasp
+  injection: 卡要求绝对力而实际承载通道未标定
+  expected_records: [Resolver 阻塞, 无创建调用, 保留所缺批准范围]
+  ordering: [校验手、通道、标定修订与工况先于任何派发]
+  forbidden_outcomes: [用第三方拟合或电流直接代替 N]
+- id: F06b
+  at_boundary: inspect
+  injection: 食材背面遮挡且载荷信号已饱和
+  expected_records: [Verifier 对完整性记 UNKNOWN, 记录无效通道掩码]
+  ordering: [安全支撑先于换视角]
+  forbidden_outcomes: [未见裂纹即判完整]
+monitor_needs:
+- mr: MR-05
+  concern: 闭合过冲及保持下限
+  evidence: 指位、轴向计数、视觉形变及批准记录
+  d9: generic/contact_force_envelope@1
+  maximum: SOFT_HOLD
+- mr: MR-02
+  concern: 相邻外观相似食材
+  evidence: 可区分的实例锚点
+  d9: generic/target_identity@1
+  maximum: SLOW
+- mr: MR-01
+  concern: 独立基线核验跌倒、碰撞或危险闯入
+  evidence: 合格的本体／世界证据与 S0 实际保护回执
+  d9: baseline/fall@1（其他危险依部署登记的基线硬规则）
+  maximum: STOP_LATCHED
+- mr: MR-03
+  concern: 运动离开本阶段批准走廊
+  evidence: 参考系一致的姿态、方向与扫掠区
+  d9: generic/motion_envelope@1
+  maximum: SLOW
+gap_refs: [M03, C01, E01, M01]
+coverage:
+  components:
+    Planner: 已覆盖
+    Context: 已覆盖
+    Memory: 已覆盖
+    ToolInterface: 已覆盖
+    Resolver: 已覆盖
+    Executor: 已覆盖
+    Verifier: 已覆盖
+    S1: 需要但被阻塞
+    S0: 需要但被阻塞
+    Monitor: 已覆盖
+    Protocol: 已覆盖
+    BodyProfile: 需要但被阻塞
+  perception:
+    头部视觉: 已覆盖
+    关节位姿: 已覆盖
+    手部轴向计数: 已覆盖
+    电流代理: 不涉及
+    深度: 不涉及
+    点云: 不涉及
+    语音: 不涉及
+    惯性: 不涉及
+    足接触: 不涉及
+    液位与溢出: 不涉及
+    材料损伤: 需要但被阻塞
+    接收者承载: 不涉及
+    柔性地标: 不涉及
+    接口就位与扭矩: 不涉及
+    可读标签: 不涉及
+    动态目标轨迹: 不涉及
+    外部载荷与张力: 不涉及
+    工作区可见范围: 不涉及
+extends_walkthrough: 独立用例
+dag:
+  nodes:
+  - id: bind
+    phase: bind
+    gate: 候选对象与材料验收标准可核对
+    composition: S2_INTERNAL
+    depends_on: []
+    parallel_group: 无
+    parent: 无
+  - id: grasp
+    phase: grasp
+    gate: 实际手、通道、材料工况与所需单位均获批准
+    composition: PROVIDER_COMPOSITE
+    depends_on: [bind]
+    parallel_group: 无
+    parent: 无
+  - id: lift
+    phase: lift
+    gate: 握稳且保持令牌有效，载荷包络允许提升
+    composition: ATOMIC
+    depends_on: [grasp]
+    parallel_group: 无
+    parent: 无
+  - id: inspect
+    phase: inspect
+    gate: 物件已提升并稳定保持，材料标准可用
+    composition: ATOMIC
+    depends_on: [lift]
+    parallel_group: 无
+    parent: 无
+  replan_trigger: 证据工况改变后重新选择变体；不自动放宽力窗
+capabilities:
+- name: s2.select
+  status: 内部节点
+  reference: vla-harness/docs/harness-design.md
+  requirements: 入口：候选对象与材料验收标准可核对。退出检查：实例和标准可区分
+- name: fragile_acquire
+  status: 需新建
+  reference: 待发布
+  requirements: 入口：实际手、通道、材料工况与所需单位均获批准。退出检查：入口证据覆盖实际承载通道
+- name: move_payload
+  status: 已有卡
+  reference: vla-harness/contracts/v1/examples/capability.move-payload.json
+  requirements: 入口：握稳且保持令牌有效，载荷包络允许提升。退出检查：物件随手而非留在台面
+- name: measure_condition
+  status: 目录模板
+  reference: therblig-vla/therbligs/catalog.v0.yaml
+  requirements: 入口：物件已提升并稳定保持，材料标准可用。退出检查：损伤标准与可见证据对应
+simo:
+- phase: bind
+  lanes:
+    E: {label: 观察, owner: S1, access: OBSERVE, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    S2: {label: ST, owner: S2, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    MON: {label: 基线, owner: MON, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    LA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    LH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    W: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    L: {label: 平衡, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+- phase: grasp
+  lanes:
+    E: {label: 观察, owner: S1, access: OBSERVE, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    S2: {label: 任务记录, owner: S2, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    MON: {label: 基线, owner: MON, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    LA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RA: {label: G, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    LH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RH: {label: G, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    W: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    L: {label: 平衡, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+- phase: lift
+  lanes:
+    E: {label: 观察, owner: S1, access: OBSERVE, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    S2: {label: 任务记录, owner: S2, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    MON: {label: 基线, owner: MON, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    LA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RA: {label: TL, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    LH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RH: {label: H, owner: S0, access: DEPEND, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    W: {label: TL, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    L: {label: 平衡, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+- phase: inspect
+  lanes:
+    E: {label: 观察, owner: S1, access: OBSERVE, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    S2: {label: I, owner: S2, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    MON: {label: 基线, owner: MON, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    LA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    LH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RH: {label: H, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    W: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    L: {label: 平衡, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+occupancy:
+- phase: bind
+  resources: E:OBSERVE、L:MAINTAINED
+  combination: 观察
+  handoff: 绑定材料批次与标准
+- phase: grasp
+  resources: E:OBSERVE、RA:DRIVE、RH:DRIVE、L:MAINTAINED
+  combination: 材料变体未批准
+  handoff: 不能在无验证时转入持续保持
+- phase: lift
+  resources: E:OBSERVE、RA:DRIVE、RH:DEPEND、W:DRIVE、L:MAINTAINED
+  combination: carry-with-support 仍需材料授权
+  handoff: 沿用同一材料和接触工况
+- phase: inspect
+  resources: E:OBSERVE、RH:MAINTAINED、L:MAINTAINED
+  combination: 无新增驱动
+  handoff: 未知时先安全放回
+checkpoints:
+- phase: grasp
+  SUCCESS: 允许相对计数的已验证变体取得控制
+  FAILED: 确认闭合压碎目标
+  UNKNOWN: 饱和或不可辨别滑移
+  recovery: 维持安全状态并补证
+- phase: inspect
+  SUCCESS: 按所选材料标准完整且已安全提升
+  FAILED: 明确蛋壳裂纹、果肉压损或豆腐破碎
+  UNKNOWN: 背面不可见且无合格替代证据
+  recovery: 换视角或按合格能力放回
+context: [缓存食材类型、实际手、承载通道、接触部位依据与校零状态]
+memory: [保存原始计数及逐通道有效位, 跨食材批次不复用批准]
+training:
+  labels: [ST, G, TL, H, I]
+  masks: [E 与 MON 无动作目标, 按实际 grant 展开轴，观测缺失另设掩码]
+  simulation: 分开模拟压碎、滑落与信号饱和，材料模型只作标签候选
+  teleoperation: 原生示教补充易损材质损伤标注
+  cross_embodiment: 臂段可迁移；刚体夹爪数据不能充当柔软食材的接触真值
+test_vectors:
+- given: [选择必须核验绝对力的材料变体，受力指无适用转换及批准。, 在闭合过冲受限的工况下拾取鸡蛋、草莓或豆腐]
+  when: F06a
+  expected_records: [Resolver 阻塞, 无创建调用, 保留所缺批准范围]
+  ordering: [校验手、通道、标定修订与工况先于任何派发]
+  forbidden_outcomes: [用第三方拟合或电流直接代替 N]
+  assertions:
+  - alias: metric
+    record_type: 证据批准
+    path: /适用性
+    equals: 无匹配通道批准
+    source: 适配器
+    record: metric
+  - alias: gate
+    record_type: 解析记录
+    path: /状态
+    equals: 阻塞
+    source: 适配器
+    record: gate
+  before:
+  - first: metric
+    then: gate
+- given: [相对计数变体已获工况验证，提升后需重新检验完整性。, 在闭合过冲受限的工况下拾取鸡蛋、草莓或豆腐]
+  when: F06b
+  expected_records: [Verifier 对完整性记 UNKNOWN, 记录无效通道掩码]
+  ordering: [安全支撑先于换视角]
+  forbidden_outcomes: [未见裂纹即判完整]
+  assertions:
+  - alias: mask
+    record_type: 观测质量
+    path: /材料可见性
+    equals: 背面遮挡
+    source: 适配器
+    record: mask
+  - alias: check
+    record_type: Verification
+    path: /verdict
+    equals: UNKNOWN
+    source: 协议
+    record: check
+  before:
+  - first: mask
+    then: check
+evidence_refs:
+- vla-harness/contracts/v1/examples/capability.acquire-object.json
+- vla-harness/contracts/v1/examples/observation-stream.hand-force.json
+- vla-harness/contracts/v1/examples/body-profile.g1-inspire.json
+protocol_checks:
+- object: Capability
+  fields: [semantics, limits]
+  criterion: 通道用途和低速配置另验
+- object: BodyProfile
+  fields: [sensors, s0_profiles]
+  criterion: 未标定通道不能换算绝对力
+- object: Verification
+  fields: [predicates, evaluated_at]
+  criterion: 按食材标准检查完整性
+verification_boundaries:
+  phases: [grasp, inspect]
+  terminal_success: inspect

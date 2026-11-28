@@ -1,0 +1,139 @@
+scenario_id: B18
+revision: 草案一
+tier: B
+title: 清桌并装洗碗机
+baseline_refs:
+  root: 67c066d
+  harness: ed2eb4b
+  provider: 99b37bf
+  catalog: 0.2.0
+  body_profile: g1-inspire@3
+goal: 将清单中的餐具逐件安放
+success_definition: 最新清单每项均有对应支撑与位置证据，无未决遗漏
+authorization:
+  status: 当前本体未授权
+  scope: 固定站姿可达区非易碎餐具的整单安放与最终结清；逐件装载可条件核验，未决格被遮挡时不能证明整单成功
+  reason: 多物体遮挡及柜内视野限制覆盖面，区域外物件需额外步态授权
+  would_authorize: 限定站姿可达区与非易碎材料，并验证能独立结清遮挡格的取证路径；若移动底座，行走仅仿真覆盖、实机阻塞
+  provenance: [DATASHEET_DECLARED, NEEDS_VALIDATION]
+ambiguity: 重复的搬运是多个 TL/RL 实例；核对遗漏是 I，等待通路是 UD
+phases:
+- id: inventory
+  goal: 形成有版本的物件清单
+  codes: [SH, FD, ST, PN]
+  capability: s2.inventory（内部）
+  s0_modes: BALANCE
+  verification: 清单记录来源与新增移除理由
+  monitor_need: 漏项和身份混淆
+  authorization: 条件授权
+  coverage: 已覆盖
+  fault_refs: []
+  authorization_note: 清单记录来源与新增移除理由
+- id: schedule
+  goal: 诊断已就绪但空闲的轨
+  codes: [AD, PN]
+  capability: s2.schedule（内部）
+  s0_modes: POSE_HOLD
+  verification: 有可执行分支、无外部阻塞且未派发才记 AD
+  monitor_need: 停滞观测，由 S2 归因
+  authorization: 条件授权
+  coverage: 已覆盖
+  fault_refs: [F18b]
+  authorization_note: 有可执行分支、无外部阻塞且未派发才记 AD
+- id: load
+  goal: 在固定可达区逐件装载
+  codes: [G, TL, H, PP, RL]
+  capability: 拾取、搬运卡与摆位、释放模板
+  s0_modes: RETENTION、BALANCE
+  verification: 按实例核对架内支撑和脱手
+  monitor_need: 碰撞和遗漏
+  authorization: 条件授权
+  coverage: 已覆盖
+  fault_refs: []
+  authorization_note: 按实例核对架内支撑和脱手
+- id: audit
+  goal: 检查未决项
+  codes: [I, UD]
+  capability: measure_condition（模板）
+  s0_modes: POSE_HOLD
+  verification: 未决格不可见给 UNKNOWN 而非 SUCCESS
+  monitor_need: 外部阻塞
+  authorization: 条件授权
+  coverage: 需要但被阻塞
+  fault_refs: [F18]
+  authorization_note: 未决格不可见给 UNKNOWN 而非 SUCCESS
+faults:
+- id: F18
+  at_boundary: audit
+  injection: 最后一件被遮挡且清单中仍未结清
+  expected_records: [Verifier 将该项记 UNKNOWN, Memory 保留已结清项目, Planner 只安排补证]
+  ordering: [逐项对账先于任务成功]
+  forbidden_outcomes: [由空桌图像提交整单成功, 重复已放好的餐具]
+- id: F18b
+  at_boundary: schedule
+  injection: 前驱已验收且资源可用，调度器未选任何就绪节点
+  expected_records: [保留就绪集与资源快照, S2 核实可避免的空闲]
+  ordering: [确定无外部屏障先于 AD 归因]
+  forbidden_outcomes: [将所有等待一律标作 UD]
+monitor_needs:
+- mr: MR-07
+  concern: 最后一件被遮挡且清单中仍未结清
+  evidence: 任务清单、遮挡格与逐物验证
+  d9: generic/progress_duration@1
+  maximum: REEVALUATE
+- mr: MR-01
+  concern: 独立基线核验跌倒、碰撞或危险闯入
+  evidence: 合格的本体／世界证据与 S0 实际保护回执
+  d9: baseline/fall@1（其他危险依部署登记的基线硬规则）
+  maximum: STOP_LATCHED
+- mr: MR-05
+  concern: 持物滑移、载荷转移或非预期接触
+  evidence: 绑定手的原始计数、指位和物手相对运动
+  d9: generic/contact_force_envelope@1
+  maximum: SOFT_HOLD
+- mr: MR-08
+  concern: 停止词或认证的意图纠正
+  evidence: 带来源的话语及当前目标修订
+  d9: 持续语音观测、认证纠正与基线停止词
+  maximum: STOP_LATCHED
+gap_refs: [M09, E01, M01]
+coverage:
+  components:
+    Planner: 已覆盖
+    Context: 已覆盖
+    Memory: 已覆盖
+    ToolInterface: 已覆盖
+    Resolver: 已覆盖
+    Executor: 已覆盖
+    Verifier: 已覆盖
+    S1: 已覆盖
+    S0: 已覆盖
+    Monitor: 已覆盖
+    Protocol: 已覆盖
+    BodyProfile: 需要但被阻塞
+  perception:
+    头部视觉: 已覆盖
+    关节位姿: 已覆盖
+    手部轴向计数: 已覆盖
+    电流代理: 不涉及
+    深度: 不涉及
+    点云: 不涉及
+    语音: 需要但被阻塞
+    惯性: 不涉及
+    足接触: 不涉及
+    液位与溢出: 不涉及
+    材料损伤: 不涉及
+    接收者承载: 不涉及
+    柔性地标: 不涉及
+    接口就位与扭矩: 不涉及
+    可读标签: 不涉及
+    动态目标轨迹: 不涉及
+    外部载荷与张力: 不涉及
+    工作区可见范围: 需要但被阻塞
+protocol_checks:
+- object: Invocation
+  fields: [task_id, goal_revision]
+  criterion: 关联清单修订
+- object: Verification
+  fields: [subject_ref, predicates]
+  criterion: 逐项支撑后复核任务级效果

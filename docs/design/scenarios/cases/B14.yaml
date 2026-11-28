@@ -1,0 +1,127 @@
+scenario_id: B14
+revision: 草案一
+tier: B
+title: 持续推车
+baseline_refs:
+  root: 67c066d
+  harness: ed2eb4b
+  provider: 99b37bf
+  catalog: 0.2.0
+  body_profile: g1-inspire@3
+goal: 使车到达指定位置并停稳
+success_definition: 车和本体同步到位，外力解除后车未继续滑动
+authorization:
+  status: 当前本体未授权
+  scope: 推车把手保持、轮地阻力与足滑的联合工况
+  reason: 行走仿真已覆盖、实机受阻；推车需要持续外力与支撑耦合
+  would_authorize: 验证车体制动、推力路径、步态和人员工作区
+  provenance: [DATASHEET_DECLARED, NEEDS_VALIDATION]
+ambiguity: 车轮受推属于 U；腿的位移是 LO，不把推车标为手持载荷 TL
+phases:
+- id: bind
+  goal: 识别车体及目标区域
+  codes: [SH, FD, ST]
+  capability: locate_candidates（模板）
+  s0_modes: BALANCE
+  verification: 确认车体实例与清空走廊
+  monitor_need: 动态人员
+  authorization: 条件授权
+  coverage: 已覆盖
+  fault_refs: []
+  authorization_note: 确认车体实例与清空走廊
+- id: push
+  goal: 推动并监测持续接触
+  codes: [U, x.locomote]
+  capability: 推车协调技能（待建）
+  s0_modes: COMPLIANCE、LOCOMOTION_TRACKING
+  verification: 车轮实际移动且足部稳定
+  monitor_need: 车轮卡滞与足滑
+  authorization: 当前本体未授权
+  coverage: 需要但被阻塞
+  fault_refs: [F14]
+  authorization_note: 推车把手保持、轮地阻力与足滑的联合工况：行走仿真已覆盖、实机受阻；推车需要持续外力与支撑耦合
+- id: stop
+  goal: 确认车停稳才脱离
+  codes: [I, RL]
+  capability: 卸载接触变体（待建）
+  s0_modes: POSE_HOLD
+  verification: 撤去外力后车仍停在目标区
+  monitor_need: 回滚
+  authorization: 当前本体未授权
+  coverage: 需要但被阻塞
+  fault_refs: []
+  authorization_note: 推车把手保持、轮地阻力与足滑的联合工况：行走仿真已覆盖、实机受阻；推车需要持续外力与支撑耦合
+faults:
+- id: F14
+  at_boundary: push
+  injection: 车轮阻滞而身体继续前倾
+  expected_records: [S0 按耦合域保护, S2 核对车体是否仍移动]
+  ordering: [实测车体和支撑稳定先于继续]
+  forbidden_outcomes: [把臂到位判作车到位]
+monitor_needs:
+- mr: MR-04
+  concern: 车轮阻滞而身体继续前倾
+  evidence: 足滑、车与本体相对运动
+  d9: generic/posture_balance@1
+  maximum: STOP_LATCHED
+- mr: MR-01
+  concern: 独立基线核验跌倒、碰撞或危险闯入
+  evidence: 合格的本体／世界证据与 S0 实际保护回执
+  d9: baseline/fall@1（其他危险依部署登记的基线硬规则）
+  maximum: STOP_LATCHED
+- mr: MR-03
+  concern: 运动离开本阶段批准走廊
+  evidence: 参考系一致的姿态、方向与扫掠区
+  d9: generic/motion_envelope@1
+  maximum: SLOW
+- mr: MR-06
+  concern: 人员或物体进入批准区域边界
+  evidence: 实测空间关系或经复核的视觉发现
+  d9: generic/people_workspace@1
+  maximum: SOFT_HOLD
+- mr: MR-07
+  concern: 停滞、超窗或屏障等待
+  evidence: 实测进展及当前阶段的时钟依据
+  d9: generic/progress_duration@1
+  maximum: REEVALUATE
+gap_refs: [C02, E04, M01]
+coverage:
+  components:
+    Planner: 已覆盖
+    Context: 不涉及
+    Memory: 不涉及
+    ToolInterface: 不涉及
+    Resolver: 已覆盖
+    Executor: 已覆盖
+    Verifier: 已覆盖
+    S1: 需要但被阻塞
+    S0: 需要但被阻塞
+    Monitor: 已覆盖
+    Protocol: 已覆盖
+    BodyProfile: 需要但被阻塞
+  perception:
+    头部视觉: 已覆盖
+    关节位姿: 已覆盖
+    手部轴向计数: 已覆盖
+    电流代理: 不涉及
+    深度: 不涉及
+    点云: 不涉及
+    语音: 不涉及
+    惯性: 需要但被阻塞
+    足接触: 需要但被阻塞
+    液位与溢出: 不涉及
+    材料损伤: 不涉及
+    接收者承载: 不涉及
+    柔性地标: 不涉及
+    接口就位与扭矩: 不涉及
+    可读标签: 不涉及
+    动态目标轨迹: 不涉及
+    外部载荷与张力: 需要但被阻塞
+    工作区可见范围: 需要但被阻塞
+protocol_checks:
+- object: Execution
+  fields: [leases, core_evidence]
+  criterion: 车体仍动时不能认定安全静止
+- object: Verification
+  fields: [predicates]
+  criterion: 检查车体、手与足分别稳定

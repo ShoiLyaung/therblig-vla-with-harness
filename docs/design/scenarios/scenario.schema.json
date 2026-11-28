@@ -1,0 +1,604 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "scenario.schema.json",
+  "title": "跨层检验用例",
+  "oneOf": [{"$ref": "#/$defs/A"}, {"$ref": "#/$defs/B"}],
+  "$defs": {
+    "phase": {
+      "type": "object",
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "goal": {"type": "string", "minLength": 1},
+        "capability": {"type": "string", "minLength": 1},
+        "s0_modes": {"type": "string", "minLength": 1},
+        "verification": {"type": "string", "minLength": 1},
+        "monitor_need": {"type": "string", "minLength": 1},
+        "authorization": {"enum": ["已授权（待实测）", "条件授权", "当前本体未授权"]},
+        "codes": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "SH",
+              "FD",
+              "ST",
+              "G",
+              "H",
+              "TL",
+              "TE",
+              "P",
+              "A",
+              "U",
+              "DA",
+              "I",
+              "PP",
+              "RL",
+              "UD",
+              "AD",
+              "PN",
+              "R",
+              "x.locomote"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "coverage": {"enum": ["已覆盖", "需要但被阻塞"]},
+        "fault_refs": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 0, "uniqueItems": true},
+        "authorization_note": {"type": "string", "minLength": 1}
+      },
+      "required": [
+        "id",
+        "goal",
+        "capability",
+        "s0_modes",
+        "verification",
+        "monitor_need",
+        "authorization",
+        "codes",
+        "coverage",
+        "fault_refs",
+        "authorization_note"
+      ],
+      "additionalProperties": false
+    },
+    "fault": {
+      "type": "object",
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "at_boundary": {"type": "string", "minLength": 1},
+        "injection": {"type": "string", "minLength": 1},
+        "expected_records": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1, "uniqueItems": true},
+        "ordering": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1, "uniqueItems": true},
+        "forbidden_outcomes": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1, "uniqueItems": true}
+      },
+      "required": ["id", "at_boundary", "injection", "expected_records", "ordering", "forbidden_outcomes"],
+      "additionalProperties": false
+    },
+    "monitor": {
+      "type": "object",
+      "properties": {
+        "mr": {"type": "string", "pattern": "^MR-0[1-8]$"},
+        "concern": {"type": "string", "minLength": 1},
+        "evidence": {"type": "string", "minLength": 1},
+        "d9": {"type": "string", "minLength": 1},
+        "maximum": {"enum": ["REEVALUATE", "SLOW", "SOFT_HOLD", "STOP_LATCHED"]}
+      },
+      "required": ["mr", "concern", "evidence", "d9", "maximum"],
+      "additionalProperties": false
+    },
+    "node": {
+      "type": "object",
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "phase": {"type": "string", "minLength": 1},
+        "gate": {"type": "string", "minLength": 1},
+        "composition": {"enum": ["ATOMIC", "EXPANDABLE", "PROVIDER_COMPOSITE", "S2_INTERNAL", "BARRIER"]},
+        "depends_on": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 0, "uniqueItems": true},
+        "parallel_group": {"type": "string", "minLength": 1},
+        "parent": {"type": "string", "minLength": 1},
+        "graph_revision": {"type": "string", "minLength": 1},
+        "depends_on_one_of": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1, "uniqueItems": true}
+      },
+      "required": ["id", "phase", "gate", "composition", "depends_on", "parallel_group", "parent"],
+      "additionalProperties": false
+    },
+    "lane": {
+      "type": "object",
+      "properties": {
+        "label": {"type": "string", "minLength": 1},
+        "owner": {"enum": ["S0", "S1", "S2", "MON"]},
+        "access": {"enum": ["OBSERVE", "DRIVE", "DEPEND", "TAKEOVER", "MAINTAINED", "RECORD"]},
+        "observation_mask": {"type": "string", "minLength": 1},
+        "action_mask": {"type": "string", "minLength": 1},
+        "missing_mask": {"type": "string", "minLength": 1}
+      },
+      "required": ["label", "owner", "access", "observation_mask", "action_mask", "missing_mask"],
+      "additionalProperties": false
+    },
+    "capability": {
+      "type": "object",
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "status": {"enum": ["已有卡", "目录模板", "需新建", "内部节点"]},
+        "reference": {"type": "string", "minLength": 1},
+        "requirements": {"type": "string", "minLength": 1}
+      },
+      "required": ["name", "status", "reference", "requirements"],
+      "additionalProperties": false
+    },
+    "vector": {
+      "type": "object",
+      "properties": {
+        "given": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1, "uniqueItems": true},
+        "when": {"type": "string", "minLength": 1},
+        "expected_records": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1, "uniqueItems": true},
+        "ordering": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1, "uniqueItems": true},
+        "forbidden_outcomes": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1, "uniqueItems": true},
+        "assertions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "alias": {"type": "string", "minLength": 1},
+              "record_type": {"type": "string", "minLength": 1},
+              "path": {"type": "string", "minLength": 1},
+              "equals": {},
+              "source": {"enum": ["协议", "适配器"]},
+              "record": {"type": "string", "minLength": 1},
+              "optional_record": {"const": true},
+              "select": {
+                "type": "object",
+                "properties": {
+                  "array_path": {"type": "string", "minLength": 1},
+                  "resource_id": {"type": "string", "minLength": 1}
+                },
+                "required": ["array_path", "resource_id"],
+                "additionalProperties": false
+              },
+              "compare_as": {"const": "set"}
+            },
+            "required": ["alias", "record_type", "path", "equals", "source", "record"],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "before": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {"first": {"type": "string", "minLength": 1}, "then": {"type": "string", "minLength": 1}},
+            "required": ["first", "then"],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        }
+      },
+      "required": ["given", "when", "expected_records", "ordering", "forbidden_outcomes", "assertions", "before"],
+      "additionalProperties": false
+    },
+    "shared": {
+      "type": "object",
+      "properties": {
+        "revision": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "baseline_refs": {
+          "type": "object",
+          "properties": {
+            "root": {"type": "string", "minLength": 1},
+            "harness": {"type": "string", "minLength": 1},
+            "provider": {"type": "string", "minLength": 1},
+            "catalog": {"type": "string", "minLength": 1},
+            "body_profile": {"type": "string", "minLength": 1}
+          },
+          "required": ["root", "harness", "provider", "catalog", "body_profile"],
+          "additionalProperties": false
+        },
+        "goal": {"type": "string", "minLength": 1},
+        "success_definition": {"type": "string", "minLength": 1},
+        "authorization": {
+          "type": "object",
+          "properties": {
+            "status": {"enum": ["已授权（待实测）", "条件授权", "当前本体未授权"]},
+            "scope": {"type": "string", "minLength": 1},
+            "reason": {"type": "string", "minLength": 1},
+            "would_authorize": {"type": "string", "minLength": 1},
+            "provenance": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "DATASHEET_DECLARED",
+                  "THIRD_PARTY_MEASURED",
+                  "UNCALIBRATED",
+                  "NEEDS_VALIDATION",
+                  "VALIDATED"
+                ]
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "scope_branches": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "description": {"type": "string", "minLength": 1},
+                  "phases": {
+                    "type": "array",
+                    "items": {"type": "string", "minLength": 1},
+                    "minItems": 1,
+                    "uniqueItems": true
+                  },
+                  "status": {"enum": ["已授权（待实测）", "条件授权", "当前本体未授权"]}
+                },
+                "required": ["description", "phases", "status"],
+                "additionalProperties": false
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            }
+          },
+          "required": ["status", "scope", "reason", "would_authorize", "provenance"],
+          "additionalProperties": false
+        },
+        "ambiguity": {"type": "string", "minLength": 1},
+        "phases": {"type": "array", "items": {"$ref": "#/$defs/phase"}, "minItems": 1, "uniqueItems": true},
+        "faults": {"type": "array", "items": {"$ref": "#/$defs/fault"}, "minItems": 1, "uniqueItems": true},
+        "monitor_needs": {"type": "array", "items": {"$ref": "#/$defs/monitor"}, "minItems": 1, "uniqueItems": true},
+        "gap_refs": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 0, "uniqueItems": true},
+        "coverage": {
+          "type": "object",
+          "properties": {
+            "components": {
+              "type": "object",
+              "properties": {
+                "Planner": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]},
+                "Context": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]},
+                "Memory": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]},
+                "ToolInterface": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]},
+                "Resolver": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]},
+                "Executor": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]},
+                "Verifier": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]},
+                "S1": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]},
+                "S0": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]},
+                "Monitor": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]},
+                "Protocol": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]},
+                "BodyProfile": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]}
+              },
+              "required": [
+                "Planner",
+                "Context",
+                "Memory",
+                "ToolInterface",
+                "Resolver",
+                "Executor",
+                "Verifier",
+                "S1",
+                "S0",
+                "Monitor",
+                "Protocol",
+                "BodyProfile"
+              ],
+              "additionalProperties": false
+            },
+            "perception": {
+              "type": "object",
+              "properties": {
+                "头部视觉": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]},
+                "关节位姿": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]},
+                "手部轴向计数": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]},
+                "电流代理": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]},
+                "深度": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]},
+                "点云": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]},
+                "语音": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]},
+                "惯性": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]},
+                "足接触": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]},
+                "液位与溢出": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]},
+                "材料损伤": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]},
+                "接收者承载": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]},
+                "柔性地标": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]},
+                "接口就位与扭矩": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]},
+                "可读标签": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]},
+                "动态目标轨迹": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]},
+                "外部载荷与张力": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]},
+                "工作区可见范围": {"enum": ["已覆盖", "需要但被阻塞", "不涉及"]}
+              },
+              "required": [
+                "头部视觉",
+                "关节位姿",
+                "手部轴向计数",
+                "电流代理",
+                "深度",
+                "点云",
+                "语音",
+                "惯性",
+                "足接触",
+                "液位与溢出",
+                "材料损伤",
+                "接收者承载",
+                "柔性地标",
+                "接口就位与扭矩",
+                "可读标签",
+                "动态目标轨迹",
+                "外部载荷与张力",
+                "工作区可见范围"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": ["components", "perception"],
+          "additionalProperties": false
+        },
+        "protocol_checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "object": {
+                "enum": [
+                  "Capability",
+                  "Invocation",
+                  "Execution",
+                  "Result",
+                  "Verification",
+                  "Event",
+                  "ModeRequest",
+                  "BodyProfile"
+                ]
+              },
+              "fields": {
+                "type": "array",
+                "items": {"type": "string", "minLength": 1},
+                "minItems": 1,
+                "uniqueItems": true
+              },
+              "criterion": {"type": "string", "minLength": 1}
+            },
+            "required": ["object", "fields", "criterion"],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "revision",
+        "title",
+        "baseline_refs",
+        "goal",
+        "success_definition",
+        "authorization",
+        "ambiguity",
+        "phases",
+        "faults",
+        "monitor_needs",
+        "gap_refs",
+        "coverage",
+        "protocol_checks"
+      ]
+    },
+    "A": {
+      "allOf": [
+        {"$ref": "#/$defs/shared"},
+        {
+          "type": "object",
+          "properties": {
+            "scenario_id": {"type": "string", "pattern": "^A[0-9]{2,}$"},
+            "tier": {"const": "A"},
+            "extends_walkthrough": {"type": "string", "minLength": 1},
+            "capabilities": {"type": "array", "items": {"$ref": "#/$defs/capability"}, "minItems": 1, "uniqueItems": true},
+            "dag": {
+              "type": "object",
+              "properties": {
+                "nodes": {"type": "array", "items": {"$ref": "#/$defs/node"}, "minItems": 1, "uniqueItems": true},
+                "replan_trigger": {"type": "string", "minLength": 1},
+                "revision_cut": {
+                  "type": "object",
+                  "properties": {
+                    "previous": {"type": "string", "minLength": 1},
+                    "current": {"type": "string", "minLength": 1},
+                    "trigger": {"type": "string", "minLength": 1},
+                    "imported_evidence": {
+                      "type": "array",
+                      "items": {"type": "string", "minLength": 1},
+                      "minItems": 1,
+                      "uniqueItems": true
+                    }
+                  },
+                  "required": ["previous", "current", "trigger", "imported_evidence"],
+                  "additionalProperties": false
+                }
+              },
+              "required": ["nodes", "replan_trigger"],
+              "additionalProperties": false
+            },
+            "simo": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "phase": {"type": "string", "minLength": 1},
+                  "lanes": {
+                    "type": "object",
+                    "properties": {
+                      "E": {"$ref": "#/$defs/lane"},
+                      "LA": {"$ref": "#/$defs/lane"},
+                      "RA": {"$ref": "#/$defs/lane"},
+                      "LH": {"$ref": "#/$defs/lane"},
+                      "RH": {"$ref": "#/$defs/lane"},
+                      "W": {"$ref": "#/$defs/lane"},
+                      "L": {"$ref": "#/$defs/lane"},
+                      "S2": {"$ref": "#/$defs/lane"},
+                      "MON": {"$ref": "#/$defs/lane"}
+                    },
+                    "required": ["E", "LA", "RA", "LH", "RH", "W", "L", "S2", "MON"],
+                    "additionalProperties": false
+                  },
+                  "replay_segments": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {"type": "string", "minLength": 1},
+                        "lanes": {
+                          "type": "object",
+                          "properties": {
+                            "E": {"$ref": "#/$defs/lane"},
+                            "LA": {"$ref": "#/$defs/lane"},
+                            "RA": {"$ref": "#/$defs/lane"},
+                            "LH": {"$ref": "#/$defs/lane"},
+                            "RH": {"$ref": "#/$defs/lane"},
+                            "W": {"$ref": "#/$defs/lane"},
+                            "L": {"$ref": "#/$defs/lane"},
+                            "S2": {"$ref": "#/$defs/lane"},
+                            "MON": {"$ref": "#/$defs/lane"}
+                          },
+                          "required": ["E", "LA", "RA", "LH", "RH", "W", "L", "S2", "MON"],
+                          "additionalProperties": false
+                        },
+                        "handoff": {"type": "string", "minLength": 1}
+                      },
+                      "required": ["id", "lanes", "handoff"],
+                      "additionalProperties": false
+                    },
+                    "minItems": 1,
+                    "uniqueItems": true
+                  }
+                },
+                "required": ["phase", "lanes"],
+                "additionalProperties": false
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "occupancy": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "phase": {"type": "string", "minLength": 1},
+                  "resources": {"type": "string", "minLength": 1},
+                  "combination": {"type": "string", "minLength": 1},
+                  "handoff": {"type": "string", "minLength": 1},
+                  "envelope_policy_ref": {"type": "string", "minLength": 1},
+                  "admission": {"type": "string", "minLength": 1}
+                },
+                "required": ["phase", "resources", "combination", "handoff"],
+                "additionalProperties": false
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "checkpoints": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "phase": {"type": "string", "minLength": 1},
+                  "SUCCESS": {"type": "string", "minLength": 1},
+                  "FAILED": {"type": "string", "minLength": 1},
+                  "UNKNOWN": {"type": "string", "minLength": 1},
+                  "recovery": {"type": "string", "minLength": 1}
+                },
+                "required": ["phase", "SUCCESS", "FAILED", "UNKNOWN", "recovery"],
+                "additionalProperties": false
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "context": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1},
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "memory": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1},
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "training": {
+              "type": "object",
+              "properties": {
+                "labels": {
+                  "type": "array",
+                  "items": {"type": "string", "minLength": 1},
+                  "minItems": 1,
+                  "uniqueItems": true
+                },
+                "masks": {
+                  "type": "array",
+                  "items": {"type": "string", "minLength": 1},
+                  "minItems": 1,
+                  "uniqueItems": true
+                },
+                "simulation": {"type": "string", "minLength": 1},
+                "teleoperation": {"type": "string", "minLength": 1},
+                "cross_embodiment": {"type": "string", "minLength": 1}
+              },
+              "required": ["labels", "masks", "simulation", "teleoperation", "cross_embodiment"],
+              "additionalProperties": false
+            },
+            "test_vectors": {"type": "array", "items": {"$ref": "#/$defs/vector"}, "minItems": 1, "uniqueItems": true},
+            "evidence_refs": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1},
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "verification_boundaries": {
+              "type": "object",
+              "properties": {
+                "phases": {
+                  "type": "array",
+                  "items": {"type": "string", "minLength": 1},
+                  "minItems": 1,
+                  "uniqueItems": true
+                },
+                "terminal_success": {"type": "string", "minLength": 1}
+              },
+              "required": ["phases", "terminal_success"],
+              "additionalProperties": false
+            },
+            "deployment_invariants": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1},
+              "minItems": 1,
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "scenario_id",
+            "tier",
+            "extends_walkthrough",
+            "capabilities",
+            "dag",
+            "simo",
+            "occupancy",
+            "checkpoints",
+            "context",
+            "memory",
+            "training",
+            "test_vectors",
+            "evidence_refs",
+            "verification_boundaries"
+          ]
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "B": {
+      "allOf": [
+        {"$ref": "#/$defs/shared"},
+        {
+          "type": "object",
+          "properties": {"scenario_id": {"type": "string", "pattern": "^B[0-9]{2,}$"}, "tier": {"const": "B"}},
+          "required": ["scenario_id", "tier"]
+        }
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

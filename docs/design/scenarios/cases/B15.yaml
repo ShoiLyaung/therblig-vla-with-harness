@@ -1,0 +1,101 @@
+scenario_id: B15
+revision: 草案一
+tier: B
+title: 杂乱箱中按标签分拣药盒
+baseline_refs:
+  root: 67c066d
+  harness: ed2eb4b
+  provider: 99b37bf
+  catalog: 0.2.0
+  body_profile: g1-inspire@3
+goal: 从外形相似的容器中选出指定标签的包装
+success_definition: 标签、实例、投放位置三项可回溯到同一物件
+authorization:
+  status: 当前本体未授权
+  scope: 标签可读、实例绑定和遮挡后重识别；仅候选检索与遮挡判 UNKNOWN 可条件核验
+  reason: 普通头部视觉可见不保证可读标签或可靠关联
+  would_authorize: 验证标签可读性、实例关联和遮挡重识别标准
+  provenance: [DATASHEET_DECLARED, NEEDS_VALIDATION]
+ambiguity: SH 搜索候选；I 对照文字标准；ST 才绑定实例
+phases:
+- id: select
+  goal: 检索并逐盒核对标签
+  codes: [SH, FD, I, ST]
+  capability: locate_candidates／measure_condition（模板）
+  s0_modes: BALANCE
+  verification: 标签遮挡判 UNKNOWN，相反标签判 FAILED
+  monitor_need: 错盒与标签遮挡
+  authorization: 条件授权
+  coverage: 需要但被阻塞
+  fault_refs: [F15]
+  authorization_note: 标签遮挡判 UNKNOWN，相反标签判 FAILED
+- id: place
+  goal: 取出绑定盒并分拣
+  codes: [G, TL, RL]
+  capability: acquire_object／move_payload（已有卡）及释放模板
+  s0_modes: RETENTION、BALANCE
+  verification: 投放后仍可追溯同一实例与标签
+  monitor_need: 遮挡后身份漂移
+  authorization: 当前本体未授权
+  coverage: 需要但被阻塞
+  fault_refs: []
+  authorization_note: 标签可读、实例绑定和遮挡后重识别：普通头部视觉可见不保证可读标签或可靠关联
+faults:
+- id: F15
+  at_boundary: select
+  injection: 相邻盒相似且目标标签被遮挡
+  expected_records: [Verifier 对标签 UNKNOWN, Context 保留候选集, 禁止抓取]
+  ordering: [标签和实例绑定先于派发]
+  forbidden_outcomes: [按包装颜色替代标签]
+monitor_needs:
+- mr: MR-02
+  concern: 相邻盒相似且目标标签被遮挡
+  evidence: 独立可读标签与物件轨迹
+  d9: generic/target_identity@1
+  maximum: SOFT_HOLD
+- mr: MR-01
+  concern: 独立基线核验跌倒、碰撞或危险闯入
+  evidence: 合格的本体／世界证据与 S0 实际保护回执
+  d9: baseline/fall@1（其他危险依部署登记的基线硬规则）
+  maximum: STOP_LATCHED
+gap_refs: [M05, E01, M01]
+coverage:
+  components:
+    Planner: 不涉及
+    Context: 已覆盖
+    Memory: 已覆盖
+    ToolInterface: 不涉及
+    Resolver: 已覆盖
+    Executor: 不涉及
+    Verifier: 已覆盖
+    S1: 已覆盖
+    S0: 已覆盖
+    Monitor: 已覆盖
+    Protocol: 已覆盖
+    BodyProfile: 需要但被阻塞
+  perception:
+    头部视觉: 已覆盖
+    关节位姿: 已覆盖
+    手部轴向计数: 已覆盖
+    电流代理: 不涉及
+    深度: 不涉及
+    点云: 不涉及
+    语音: 不涉及
+    惯性: 不涉及
+    足接触: 不涉及
+    液位与溢出: 不涉及
+    材料损伤: 不涉及
+    接收者承载: 不涉及
+    柔性地标: 不涉及
+    接口就位与扭矩: 不涉及
+    可读标签: 需要但被阻塞
+    动态目标轨迹: 不涉及
+    外部载荷与张力: 不涉及
+    工作区可见范围: 不涉及
+protocol_checks:
+- object: Invocation
+  fields: [targets, forbidden_targets]
+  criterion: 标签与实例锚点一致
+- object: Verification
+  fields: [checks]
+  criterion: 标签不可读时身份未知

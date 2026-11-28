@@ -1,0 +1,515 @@
+scenario_id: A01
+revision: 草案一
+tier: A
+title: 单臂拾放红杯
+baseline_refs:
+  root: 67c066d
+  harness: ed2eb4b
+  provider: 99b37bf
+  catalog: 0.2.0
+  body_profile: g1-inspire@3
+goal: 将场景内绑定的红杯移到指定架位
+success_definition: 最新修订下同一杯由架面支撑，手已脱离且回撤未扰动杯位
+authorization:
+  status: 条件授权
+  scope: 站姿单臂与保持交接
+  reason: 轴向计数不能识别杯色或支撑面
+  would_authorize: 站姿准入、低速闭合、同手有效空载基线及独立视觉支撑证据
+  provenance: [DATASHEET_DECLARED, NEEDS_VALIDATION]
+ambiguity: 取得控制的 G 以 acquired 点结束；RH 在 RA 的 TL 区间保持 H，不参加手指动作损失
+phases:
+- id: find
+  goal: 确定红杯与邻物
+  capability: locate_candidates
+  s0_modes: BALANCE
+  verification: 杯身份和观测源一致
+  monitor_need: MR-02
+  authorization: 条件授权
+  codes: [SH, FD, ST]
+  coverage: 已覆盖
+  fault_refs: []
+  authorization_note: 杯身份和观测源一致
+- id: approach
+  goal: 接近预抓位
+  capability: move_unloaded
+  s0_modes: BALANCE
+  verification: 到位且杯未动
+  monitor_need: MR-02
+  authorization: 条件授权
+  codes: [TE]
+  coverage: 已覆盖
+  fault_refs: []
+  authorization_note: 到位且杯未动
+- id: acquire
+  goal: 取得目标控制
+  capability: acquire_object
+  s0_modes: hand.acquire_slow
+  verification: 身份与相对运动同证
+  monitor_need: MR-05
+  authorization: 条件授权
+  codes: [G]
+  coverage: 已覆盖
+  fault_refs: [F01, F01b]
+  authorization_note: 身份与相对运动同证
+- id: carry
+  goal: 载杯至架旁
+  capability: move_payload
+  s0_modes: RETENTION、BALANCE
+  verification: 杯离桌并随臂移动
+  monitor_need: MR-05
+  authorization: 条件授权
+  codes: [TL, H]
+  coverage: 已覆盖
+  fault_refs: []
+  authorization_note: 杯离桌并随臂移动
+- id: stage
+  goal: 向架位预置
+  capability: stage_for_next_use
+  s0_modes: RETENTION
+  verification: 架面可见且姿态合格
+  monitor_need: MR-05
+  authorization: 条件授权
+  codes: [PP, H]
+  coverage: 已覆盖
+  fault_refs: []
+  authorization_note: 架面可见且姿态合格
+- id: release
+  goal: 卸载至支撑面
+  capability: release_to_support
+  s0_modes: COMPLIANCE
+  verification: 观察架面支撑与分离
+  monitor_need: MR-05
+  authorization: 条件授权
+  codes: [RL]
+  coverage: 已覆盖
+  fault_refs: []
+  authorization_note: 观察架面支撑与分离
+- id: withdraw
+  goal: 空手撤回
+  capability: move_unloaded
+  s0_modes: BALANCE
+  verification: 架位稳定且手已清空
+  monitor_need: MR-02
+  authorization: 条件授权
+  codes: [TE]
+  coverage: 已覆盖
+  fault_refs: []
+  authorization_note: 架位稳定且手已清空
+faults:
+- id: F01
+  at_boundary: acquire
+  injection: 创建回包丢失
+  expected_records: [S2 记调用视图 UNKNOWN, D8 原键回查 ADMITTED 后读取 Execution 和 core_evidence]
+  ordering: [冻结调用先于创建, 确认旧执行与资源处置先于冲突派发]
+  forbidden_outcomes: [再次物理抓取, 以超时断言未受理]
+- id: F01b
+  at_boundary: acquire
+  injection: 力子句从未布防，原宽限在空窗中届满；保留期内续租时力输入已恢复
+  expected_records:
+  - 同一保护请求和 Event 引用相同事件、保护 ID
+  - CANCEL_AFFECTED 指明 contact_force_envelope 的 GRACE_EXPIRED
+  - S2 持久预算已尽，同条件申请拒绝
+  - 随后独立的新证据证明工况改变，仅在对账后重新评估新尝试
+  - S0 独立回执的 event_ref 和 protection_id 与该中断相符，送达先后均可
+  ordering: [先请求本地收紧再发布 Event, 同条件预算用尽先于拒绝, 新证据先于按变化条件重新规划]
+  forbidden_outcomes: [以续租重置宽限, 预算用尽仍原样重派, 把重复的旧证据当作新证据]
+monitor_needs:
+- mr: MR-02
+  concern: 错杯趋近
+  evidence: 实体锚点、禁选物与接近轨迹
+  d9: generic/target_identity@1
+  maximum: SLOW
+- mr: MR-05
+  concern: 提起后滑移
+  evidence: 同手计数趋势和物手相对位移
+  d9: generic/contact_force_envelope@1
+  maximum: SOFT_HOLD
+- mr: MR-01
+  concern: 独立基线核验跌倒、碰撞或危险闯入
+  evidence: 合格的本体／世界证据与 S0 实际保护回执
+  d9: baseline/fall@1（其他危险依部署登记的基线硬规则）
+  maximum: STOP_LATCHED
+gap_refs: [E01, E02, M01]
+coverage:
+  components:
+    Planner: 已覆盖
+    Context: 已覆盖
+    Memory: 已覆盖
+    ToolInterface: 已覆盖
+    Resolver: 已覆盖
+    Executor: 已覆盖
+    Verifier: 已覆盖
+    S1: 已覆盖
+    S0: 已覆盖
+    Monitor: 已覆盖
+    Protocol: 已覆盖
+    BodyProfile: 已覆盖
+  perception:
+    头部视觉: 已覆盖
+    关节位姿: 已覆盖
+    手部轴向计数: 已覆盖
+    电流代理: 不涉及
+    深度: 不涉及
+    点云: 不涉及
+    语音: 不涉及
+    惯性: 不涉及
+    足接触: 不涉及
+    液位与溢出: 不涉及
+    材料损伤: 不涉及
+    接收者承载: 不涉及
+    柔性地标: 不涉及
+    接口就位与扭矩: 不涉及
+    可读标签: 不涉及
+    动态目标轨迹: 不涉及
+    外部载荷与张力: 不涉及
+    工作区可见范围: 不涉及
+extends_walkthrough: docs/design/walkthroughs.md#w1-单臂拾放红杯
+dag:
+  nodes:
+  - id: find
+    phase: find
+    gate: 场景与目标描述已冻结
+    composition: ATOMIC
+    depends_on: []
+    parallel_group: 无
+    parent: 无
+  - id: approach
+    phase: approach
+    gate: 目标已定位、禁选物新鲜且空手路径获准
+    composition: ATOMIC
+    depends_on: [find]
+    parallel_group: 无
+    parent: 无
+  - id: acquire
+    phase: acquire
+    gate: 已到预抓位且身份一致、hand.acquire_slow 可用
+    composition: ATOMIC
+    depends_on: [approach]
+    parallel_group: 无
+    parent: 无
+  - id: carry
+    phase: carry
+    gate: 右手保持令牌有效且搬运组合已核准
+    composition: ATOMIC
+    depends_on: [acquire]
+    parallel_group: 无
+    parent: 无
+  - id: stage
+    phase: stage
+    gate: 载荷到架旁且架面可复核
+    composition: ATOMIC
+    depends_on: [carry]
+    parallel_group: 无
+    parent: 无
+  - id: release
+    phase: release
+    gate: 已证实稳定支撑，依赖方已满足接管条件
+    composition: ATOMIC
+    depends_on: [stage]
+    parallel_group: 无
+    parent: 无
+  - id: withdraw
+    phase: withdraw
+    gate: 有空手与清空路径证据
+    composition: ATOMIC
+    depends_on: [release]
+    parallel_group: 无
+    parent: 无
+  replan_trigger: 旧调用仍活动则等待；确认已静稳后才生成新尝试
+capabilities:
+- name: locate_candidates
+  status: 目录模板
+  reference: therblig-vla/therbligs/catalog.v0.yaml
+  requirements: 入口：场景与目标描述已冻结。退出检查：杯身份和观测源一致
+- name: move_unloaded
+  status: 目录模板
+  reference: therblig-vla/therbligs/catalog.v0.yaml
+  requirements: 入口：目标已定位、禁选物新鲜且空手路径获准。退出检查：到位且杯未动；入口：有空手与清空路径证据。退出检查：架位稳定且手已清空
+- name: acquire_object
+  status: 已有卡
+  reference: vla-harness/contracts/v1/examples/capability.acquire-object.json
+  requirements: 入口：已到预抓位且身份一致、hand.acquire_slow 可用。退出检查：身份与相对运动同证
+- name: move_payload
+  status: 已有卡
+  reference: vla-harness/contracts/v1/examples/capability.move-payload.json
+  requirements: 入口：右手保持令牌有效且搬运组合已核准。退出检查：杯离桌并随臂移动
+- name: stage_for_next_use
+  status: 目录模板
+  reference: therblig-vla/therbligs/catalog.v0.yaml
+  requirements: 入口：载荷到架旁且架面可复核。退出检查：架面可见且姿态合格
+- name: release_to_support
+  status: 目录模板
+  reference: therblig-vla/therbligs/catalog.v0.yaml
+  requirements: 入口：已证实稳定支撑，依赖方已满足接管条件。退出检查：观察架面支撑与分离
+simo:
+- phase: find
+  lanes:
+    E: {label: SH/FD@t, owner: S1, access: OBSERVE, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    S2: {label: ST, owner: S2, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    MON: {label: 基线, owner: MON, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    LA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    LH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    W: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    L: {label: 平衡, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+- phase: approach
+  lanes:
+    E: {label: 观察, owner: S1, access: OBSERVE, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    S2: {label: 任务记录, owner: S2, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    MON: {label: 基线, owner: MON, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    LA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RA: {label: TE, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    LH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    W: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    L: {label: 平衡, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+- phase: acquire
+  lanes:
+    E: {label: 观察, owner: S1, access: OBSERVE, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    S2: {label: 任务记录, owner: S2, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    MON: {label: 基线, owner: MON, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    LA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RA: {label: G, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    LH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RH: {label: G, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    W: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    L: {label: 平衡, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+- phase: carry
+  lanes:
+    E: {label: 观察, owner: S1, access: OBSERVE, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    S2: {label: 任务记录, owner: S2, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    MON: {label: 基线, owner: MON, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    LA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RA: {label: TL, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    LH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RH: {label: H, owner: S0, access: DEPEND, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    W: {label: TL, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    L: {label: 平衡, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+- phase: stage
+  lanes:
+    E: {label: 观察, owner: S1, access: OBSERVE, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    S2: {label: 任务记录, owner: S2, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    MON: {label: 基线, owner: MON, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    LA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RA: {label: PP, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    LH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RH: {label: H, owner: S0, access: DEPEND, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    W: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    L: {label: 平衡, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+- phase: release
+  lanes:
+    E: {label: 观察, owner: S1, access: OBSERVE, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    S2: {label: 任务记录, owner: S2, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    MON: {label: 基线, owner: MON, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    LA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RA: {label: RL, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    LH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RH: {label: RL, owner: S1, access: TAKEOVER, observation_mask: 按新鲜有效通道, action_mask: 接管后授权轴, missing_mask: 无效或饱和通道屏蔽}
+    W: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    L: {label: 平衡, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+- phase: withdraw
+  lanes:
+    E: {label: 观察, owner: S1, access: OBSERVE, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    S2: {label: 任务记录, owner: S2, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    MON: {label: 基线, owner: MON, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    LA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RA: {label: TE, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    LH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    W: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    L: {label: 平衡, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+occupancy:
+- phase: find
+  resources: E:OBSERVE、L:MAINTAINED
+  combination: 纯观察
+  handoff: 冻结 scene_id 与排除列表
+- phase: approach
+  resources: E:OBSERVE、RA:DRIVE、L:MAINTAINED
+  combination: 独立单臂准入
+  handoff: 空手到位后交还 RA
+- phase: acquire
+  resources: E:OBSERVE、RA:DRIVE、RH:DRIVE、L:MAINTAINED
+  combination: 独立单臂准入
+  handoff: 握稳后交给 hand.retain
+- phase: carry
+  resources: E:OBSERVE、RA:DRIVE、RH:DEPEND、W:DRIVE、L:MAINTAINED
+  combination: carry-with-support
+  handoff: 登记保持令牌
+- phase: stage
+  resources: E:OBSERVE、RA:DRIVE、RH:DEPEND、L:MAINTAINED
+  combination: 站姿单臂准入
+  handoff: 保留 RH 依赖
+- phase: release
+  resources: E:OBSERVE、RA:DRIVE、RH:TAKEOVER、L:MAINTAINED
+  combination: 带撤出变体独立核准
+  handoff: 接管并消费令牌
+- phase: withdraw
+  resources: E:OBSERVE、RA:DRIVE、L:MAINTAINED
+  combination: 独立单臂准入
+  handoff: 核对空手再撤
+checkpoints:
+- phase: acquire
+  SUCCESS: 红杯身份与握稳证据同属一次调用
+  FAILED: 观察到握住邻杯
+  UNKNOWN: 仅有轴向变化而目标被挡
+  recovery: 维持负载并换视角
+- phase: withdraw
+  SUCCESS: 观察到红杯在架且回撤后稳定
+  FAILED: 确认红杯仍在桌上或已跌落
+  UNKNOWN: 架面遮挡，无法看清支撑关系
+  recovery: 补证后追加 Verification
+context: [缓存目标锚点、架面与禁选实例, 视角变更时重验新鲜度]
+memory: [保留原 invocation_id、D8 查询记录与令牌消费历史]
+training:
+  labels: [SH, FD, ST, TE, G, TL, H, PP, RL]
+  masks: [E 与 MON 无动作目标, 按实际 grant 展开轴，观测缺失另设掩码]
+  simulation: 对照创建回包正常与丢失轨迹
+  teleoperation: 配对记录原生手闭合与离桌时刻
+  cross_embodiment: 迁移空载臂轨，屏蔽不匹配手指轴
+test_vectors:
+- given: [调用已发且供应方已受理，查询原执行时仍在运行。, 将场景内绑定的红杯移到指定架位, 偏序只比较 S2 收到的两次读取响应。]
+  when: F01
+  expected_records: [S2 记调用视图 UNKNOWN, D8 原键回查 ADMITTED 后读取 Execution 和 core_evidence]
+  ordering: [冻结调用先于创建, 确认旧执行与资源处置先于冲突派发]
+  forbidden_outcomes: [再次物理抓取, 以超时断言未受理]
+  assertions:
+  - alias: lookup_read
+    record: lookup_read
+    source: 协议
+    record_type: InvocationLookup
+    path: /status
+    equals: ADMITTED
+  - alias: execution_read
+    record: execution_read
+    source: 协议
+    record_type: Execution
+    path: /state
+    equals: RUNNING
+  before:
+  - first: lookup_read
+    then: execution_read
+- given: [同次启动、原阶段已占用；重试计数跨 attempt 持久保存，同条件预算已耗尽。]
+  when: F01b
+  expected_records:
+  - 同一保护请求和 Event 引用相同事件、保护 ID
+  - CANCEL_AFFECTED 指明 contact_force_envelope 的 GRACE_EXPIRED
+  - S2 持久预算已尽，同条件申请拒绝
+  - 随后独立的新证据证明工况改变，仅在对账后重新评估新尝试
+  - S0 独立回执的 event_ref 和 protection_id 与该中断相符，送达先后均可
+  ordering: [先请求本地收紧再发布 Event, 同条件预算用尽先于拒绝, 新证据先于按变化条件重新规划]
+  forbidden_outcomes: [以续租重置宽限, 预算用尽仍原样重派, 把重复的旧证据当作新证据]
+  assertions:
+  - alias: hold
+    record: req
+    source: 适配器
+    record_type: 本地保护请求
+    path: /level
+    equals: SOFT_HOLD
+  - alias: cause
+    record: req
+    source: 适配器
+    record_type: 本地保护请求
+    path: /event_ref
+    equals: event.required-clause-unarmed-grace-expired
+  - alias: requested
+    record: req
+    source: 适配器
+    record_type: 本地保护请求
+    path: /protection_id
+    equals: protect.required-clause-unarmed-grace-expired
+  - alias: event
+    record: irq
+    source: 协议
+    record_type: Event
+    path: /event_id
+    equals: event.required-clause-unarmed-grace-expired
+  - alias: link
+    record: irq
+    source: 协议
+    record_type: Event
+    path: /protection_ref
+    equals: protect.required-clause-unarmed-grace-expired
+  - alias: disp
+    record: irq
+    source: 协议
+    record_type: Event
+    path: /interrupt/disposition
+    equals: CANCEL_AFFECTED
+  - alias: expiry
+    record: irq
+    source: 协议
+    record_type: Event
+    path: /detection/clause_failures/0/failure
+    equals: GRACE_EXPIRED
+  - alias: slot
+    record: irq
+    source: 协议
+    record_type: Event
+    path: /detection/clause_failures/0/clause_id
+    equals: contact_force_envelope
+  - alias: spent
+    record: spent
+    source: 适配器
+    record_type: 重试预算
+    path: /同条件
+    equals: 已耗尽
+  - alias: deny
+    record: deny
+    source: 适配器
+    record_type: 派发记录
+    path: /同条件新调用
+    equals: 未派发
+  - alias: changed
+    record: changed
+    source: 适配器
+    record_type: 证据复测
+    path: /工况
+    equals: 变化已核实
+  - alias: replan
+    record: replan
+    source: 适配器
+    record_type: 新尝试
+    path: /入口
+    equals: 变化条件已对账
+  - alias: receipt_event
+    source: 协议
+    record_type: ProtectionReceipt
+    record: applied
+    path: /event_ref
+    equals: event.required-clause-unarmed-grace-expired
+  - alias: receipt_id
+    source: 协议
+    record_type: ProtectionReceipt
+    record: applied
+    path: /protection_id
+    equals: protect.required-clause-unarmed-grace-expired
+  before:
+  - first: hold
+    then: event
+  - first: spent
+    then: deny
+  - first: changed
+    then: replan
+evidence_refs:
+- vla-harness/contracts/v1/examples/invocation.pick-red-cup.json
+- vla-harness/contracts/v1/examples/execution.running.json
+- vla-harness/contracts/v1/examples/capability.acquire-object.json
+- vla-harness/contracts/v1/examples/verification.unknown-occluded.json
+- vla-harness/contracts/v1/examples/body-profile.g1-inspire.json
+- vla-harness/contracts/v1/examples/clause-kind.motion-envelope.json
+- vla-harness/contracts/v1/examples/event.required-clause-unarmed-grace-expired.json
+protocol_checks:
+- object: Invocation
+  fields: [invocation_id, start_deadline]
+  criterion: 原身份和原截止执行 D8 对账
+- object: Execution
+  fields: [invocation_id, leases]
+  criterion: 按原调用归集授权
+- object: Result
+  fields: [resource_dispositions, quiescence]
+  criterion: 保持与释放各自可核对
+deployment_invariants: [S2 和 Monitor 固定同一登记修订，按 evaluator_ref 的 revision 与 digest 核验评估器；S2 不等待 Monitor 布防]
+verification_boundaries:
+  phases: [acquire, withdraw]
+  terminal_success: withdraw

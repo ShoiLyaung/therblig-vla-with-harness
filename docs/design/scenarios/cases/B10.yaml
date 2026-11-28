@@ -1,0 +1,112 @@
+scenario_id: B10
+revision: 草案一
+tier: B
+title: 翻转螺丝刀后拧紧
+baseline_refs:
+  root: 67c066d
+  harness: ed2eb4b
+  provider: 99b37bf
+  catalog: 0.2.0
+  body_profile: g1-inspire@3
+goal: 调整握姿使刀头对准螺钉并完成工具作用
+success_definition: 工具未脱手且紧固标准经独立证据验证
+authorization:
+  status: 当前本体未授权
+  scope: 已持工具手内换向、螺钉紧固扭矩证据
+  reason: 缺手内重定向技能与适用的扭矩证据
+  would_authorize: 批准持物接管变体与紧固检验标准
+  provenance: [DATASHEET_DECLARED, NEEDS_VALIDATION, THIRD_PARTY_MEASURED, UNCALIBRATED]
+ambiguity: 手内调整到当前刀头姿态是 P；对紧固件施加工具功能是 U
+phases:
+- id: grasp
+  goal: 取得刀柄
+  codes: [G, H]
+  capability: acquire_object（已有卡）
+  s0_modes: hand.acquire_slow、RETENTION
+  verification: 刀柄身份与握持一致
+  monitor_need: 错抓与脱手
+  authorization: 条件授权
+  coverage: 已覆盖
+  fault_refs: []
+  authorization_note: 刀柄身份与握持一致
+- id: rotate
+  goal: 手内重定向
+  codes: [P]
+  capability: align_for_use（手内变体待核准）
+  s0_modes: TAKEOVER 后 COMPLIANCE
+  verification: 刀头方向正确且仍在手中
+  monitor_need: 非预期滑移
+  authorization: 当前本体未授权
+  coverage: 需要但被阻塞
+  fault_refs: [F10]
+  authorization_note: 已持工具手内换向、螺钉紧固扭矩证据：缺手内重定向技能与适用的扭矩证据
+- id: turn
+  goal: 执行紧固
+  codes: [U, I]
+  capability: 紧固技能（待建）
+  s0_modes: COMPLIANCE
+  verification: 工具作用结束且紧固标准成立，否则补证
+  monitor_need: 卡滞与扭转载荷
+  authorization: 当前本体未授权
+  coverage: 需要但被阻塞
+  fault_refs: []
+  authorization_note: 已持工具手内换向、螺钉紧固扭矩证据：缺手内重定向技能与适用的扭矩证据
+faults:
+- id: F10
+  at_boundary: rotate
+  injection: 翻转时刀柄发生非预期滑动
+  expected_records: [保持已有安全接触, 记录工具身份及方向 UNKNOWN]
+  ordering: [重新确认工具受控先于接近螺钉]
+  forbidden_outcomes: [把旋转到位当作拧紧成功]
+monitor_needs:
+- mr: MR-05
+  concern: 翻转时刀柄发生非预期滑动
+  evidence: 手部指位、工具相对位姿和滑移
+  d9: generic/contact_force_envelope@1
+  maximum: SOFT_HOLD
+- mr: MR-01
+  concern: 独立基线核验跌倒、碰撞或危险闯入
+  evidence: 合格的本体／世界证据与 S0 实际保护回执
+  d9: baseline/fall@1（其他危险依部署登记的基线硬规则）
+  maximum: STOP_LATCHED
+gap_refs: [E01, E05, M01]
+coverage:
+  components:
+    Planner: 已覆盖
+    Context: 不涉及
+    Memory: 不涉及
+    ToolInterface: 不涉及
+    Resolver: 已覆盖
+    Executor: 已覆盖
+    Verifier: 已覆盖
+    S1: 需要但被阻塞
+    S0: 已覆盖
+    Monitor: 已覆盖
+    Protocol: 已覆盖
+    BodyProfile: 需要但被阻塞
+  perception:
+    头部视觉: 已覆盖
+    关节位姿: 已覆盖
+    手部轴向计数: 已覆盖
+    电流代理: 不涉及
+    深度: 不涉及
+    点云: 不涉及
+    语音: 不涉及
+    惯性: 不涉及
+    足接触: 不涉及
+    液位与溢出: 不涉及
+    材料损伤: 不涉及
+    接收者承载: 不涉及
+    柔性地标: 不涉及
+    接口就位与扭矩: 需要但被阻塞
+    可读标签: 不涉及
+    动态目标轨迹: 不涉及
+    外部载荷与张力: 不涉及
+    工作区可见范围: 不涉及
+protocol_checks:
+- object: Invocation
+  fields: [bindings, handoff_refs]
+  criterion: 手内操作需实际接管
+- object: Result
+  fields: [outputs]
+  criterion: 重新定向与紧固效果分别记录

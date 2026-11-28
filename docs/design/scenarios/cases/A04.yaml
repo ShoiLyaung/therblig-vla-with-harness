@@ -1,0 +1,365 @@
+scenario_id: A04
+revision: 草案一
+tier: A
+title: 行走、停稳与抓取
+baseline_refs:
+  root: 67c066d
+  harness: ed2eb4b
+  provider: 99b37bf
+  catalog: 0.2.0
+  body_profile: g1-inspire@3
+goal: 到达物件附近并在稳定站姿下抓取
+success_definition: 到达、稳定支撑、目标在手和安全保持均有实测证据
+authorization:
+  status: 当前本体未授权
+  scope: 实机步态支撑证据及腿臂动态组合；静稳站姿获取单独审查
+  reason: 行走仅仿真已覆盖；实机惯性与足接触估计均未获准，步态与上身并发也无批准组合
+  would_authorize: 验证本机支撑路径；并行另需获准的动态耦合守卫
+  provenance: [DATASHEET_DECLARED, NEEDS_VALIDATION]
+ambiguity: LO 只标基座位移；停止后 L 的平衡不再标 LO，上身 G/TL 单独分轨
+phases:
+- id: walk
+  goal: 仿真包络下达到接近区
+  capability: locomote
+  s0_modes: support.walk
+  verification: 有基座定位与支撑证据
+  monitor_need: MR-04
+  authorization: 当前本体未授权
+  codes: [x.locomote]
+  coverage: 需要但被阻塞
+  fault_refs: [F04a, F04b]
+  authorization_note: 有基座定位与支撑证据
+- id: stand
+  goal: 核实腿轨释放与站稳
+  capability: s2.barrier
+  s0_modes: support.balance
+  verification: 实测稳定且旧 grant 失效
+  monitor_need: MR-01
+  authorization: 条件授权
+  codes: [PN]
+  coverage: 需要但被阻塞
+  fault_refs: []
+  authorization_note: 独立站姿可核验；从实机步态退出的正向分支缺获准的前驱
+- id: grasp
+  goal: 站姿下取得目标
+  capability: acquire_object
+  s0_modes: hand.acquire_slow
+  verification: 对象身份与物手关系正确
+  monitor_need: MR-01
+  authorization: 条件授权
+  codes: [G]
+  coverage: 已覆盖
+  fault_refs: []
+  authorization_note: 从已验证静稳站姿开始，只核准独立上肢获取
+faults:
+- id: F04a
+  at_boundary: walk
+  injection: 活跃阶段内 Monitor 重启，首次有效刷新前跌倒
+  expected_records: [规则层直达 S0, UNKNOWN 基线 Event 可双空, S2 暂冻本体待派项, 对账选中 exec.walk，封住 RA 待派项；不能虚构同时在跑的上肢抓取]
+  ordering: [S0 实际范围及所有权对账先于选择取消对象, 新鲜刷新还须核对保护代际]
+  forbidden_outcomes: [凭空构造阶段, 用历史上下文取消无关执行]
+- id: F04b
+  at_boundary: walk
+  injection: 仿真姿态子句已 ARMED 后足接触消失
+  expected_records: [S0 收紧, S2 收到 LOST 与 CANCEL_AFFECTED]
+  ordering: [请求 SLOW 先于覆盖丢失中断]
+  forbidden_outcomes: [把实机从未可用的足接触标为 LOST]
+monitor_needs:
+- mr: MR-01
+  concern: 无意图时的跌倒
+  evidence: 确定性支撑／惯性基线与 S0 回执
+  d9: baseline/fall@1（其他危险依部署登记的基线硬规则）
+  maximum: STOP_LATCHED
+- mr: MR-04
+  concern: 步态中足接触通路失效
+  evidence: 仿真姿态和足接触流
+  d9: generic/posture_balance@1
+  maximum: SLOW
+- mr: MR-03
+  concern: 运动离开本阶段批准走廊
+  evidence: 参考系一致的姿态、方向与扫掠区
+  d9: generic/motion_envelope@1
+  maximum: SLOW
+- mr: MR-05
+  concern: 持物滑移、载荷转移或非预期接触
+  evidence: 绑定手的原始计数、指位和物手相对运动
+  d9: generic/contact_force_envelope@1
+  maximum: SOFT_HOLD
+gap_refs: [E04, C02, M01]
+coverage:
+  components:
+    Planner: 已覆盖
+    Context: 已覆盖
+    Memory: 已覆盖
+    ToolInterface: 已覆盖
+    Resolver: 已覆盖
+    Executor: 已覆盖
+    Verifier: 已覆盖
+    S1: 需要但被阻塞
+    S0: 需要但被阻塞
+    Monitor: 已覆盖
+    Protocol: 已覆盖
+    BodyProfile: 需要但被阻塞
+  perception:
+    头部视觉: 已覆盖
+    关节位姿: 已覆盖
+    手部轴向计数: 已覆盖
+    电流代理: 不涉及
+    深度: 需要但被阻塞
+    点云: 不涉及
+    语音: 不涉及
+    惯性: 需要但被阻塞
+    足接触: 需要但被阻塞
+    液位与溢出: 不涉及
+    材料损伤: 不涉及
+    接收者承载: 不涉及
+    柔性地标: 不涉及
+    接口就位与扭矩: 不涉及
+    可读标签: 不涉及
+    动态目标轨迹: 不涉及
+    外部载荷与张力: 不涉及
+    工作区可见范围: 不涉及
+extends_walkthrough: docs/design/walkthroughs.md#w5-行走和上肢抓取
+dag:
+  nodes:
+  - id: walk
+    phase: walk
+    gate: 仿真支撑输入合格且仿真运动包络已绑定；实机阻塞
+    composition: ATOMIC
+    depends_on: []
+    parallel_group: 无
+    parent: 无
+  - id: stand
+    phase: stand
+    gate: 步态调用已终止，等待核验腿轨实际处置
+    composition: BARRIER
+    depends_on: [walk]
+    parallel_group: 无
+    parent: 无
+  - id: grasp
+    phase: grasp
+    gate: 站稳、L 已释放且右侧站姿抓取获准
+    composition: ATOMIC
+    depends_on: [stand]
+    parallel_group: 无
+    parent: 无
+  replan_trigger: 跌倒或支撑丢失先对账；重新规划只允许合格的串行分支
+capabilities:
+- name: locomote
+  status: 目录模板
+  reference: therblig-vla/therbligs/catalog.v0.yaml
+  requirements: 入口：仿真支撑输入合格且仿真运动包络已绑定；实机阻塞。退出检查：有基座定位与支撑证据
+- name: s2.barrier
+  status: 内部节点
+  reference: vla-harness/docs/harness-design.md
+  requirements: 入口：步态调用已终止，等待核验腿轨实际处置。退出检查：实测稳定且旧 grant 失效
+- name: acquire_object
+  status: 已有卡
+  reference: vla-harness/contracts/v1/examples/capability.acquire-object.json
+  requirements: 入口：站稳、L 已释放且右侧站姿抓取获准。退出检查：对象身份与物手关系正确
+simo:
+- phase: walk
+  lanes:
+    E: {label: 观察, owner: S1, access: OBSERVE, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    S2: {label: 任务记录, owner: S2, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    MON: {label: 基线, owner: MON, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    LA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    LH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    W: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    L: {label: LO, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+- phase: stand
+  lanes:
+    E: {label: 观察, owner: S1, access: OBSERVE, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    S2: {label: PN, owner: S2, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    MON: {label: 基线, owner: MON, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    LA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    LH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    W: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    L: {label: 平衡, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+- phase: grasp
+  lanes:
+    E: {label: 观察, owner: S1, access: OBSERVE, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    S2: {label: 任务记录, owner: S2, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    MON: {label: 基线, owner: MON, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    LA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RA: {label: G, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    LH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RH: {label: G, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    W: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    L: {label: 平衡, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+occupancy:
+- phase: walk
+  resources: E:OBSERVE、L:DRIVE
+  combination: 无实机组合
+  handoff: 步态结束取得 L 的 RELEASED
+  envelope_policy_ref: simulation_only.walk.corridor@1
+  admission: 仿真域单独受理；实机拒绝
+- phase: stand
+  resources: E:OBSERVE、L:MAINTAINED
+  combination: 串行屏障
+  handoff: 恢复运动须新准入
+- phase: grasp
+  resources: E:OBSERVE、RA:DRIVE、RH:DRIVE、L:MAINTAINED
+  combination: 站姿单臂准入
+  handoff: 握稳转 RETENTION
+checkpoints:
+- phase: stand
+  SUCCESS: 到达且 L 已归还、支撑稳定
+  FAILED: 实测偏离路径或跌倒
+  UNKNOWN: 定位中断，无法确认支撑
+  recovery: 保持保护并重新测量
+- phase: grasp
+  SUCCESS: 站稳后确认目标在手
+  FAILED: 物体确认留在原地
+  UNKNOWN: 身体已停但身份不可见
+  recovery: 待补证，不提交成功
+context: [将仿真部署与实机的可用性分开, 视图按 boot_id 和 epoch 失效]
+memory: [保留真实保护范围、恢复凭证与空窗前后的证据来源]
+training:
+  labels: [x.locomote, PN, G]
+  masks: [E 与 MON 无动作目标, 按实际 grant 展开轴，观测缺失另设掩码]
+  simulation: 仿真覆盖步态支撑流先有效后丢失
+  teleoperation: 只采获准站姿上肢动作，未授权步态不采
+  cross_embodiment: 可迁移上身接近；足接触来源、地面和载荷分布不能照搬
+test_vectors:
+- given:
+  - 仿真阶段存活，重启实例尚无任何阶段记录或执行句柄。
+  - 到达物件附近并在稳定站姿下抓取
+  - 串行仿真行走中，仅腿轨有步态执行 exec.walk；RA 由 S0 维持，存在待派上肢项。Event 检测范围仅 L，回执实际保护 L、RA。两路送达可换序。
+  when: F04a
+  expected_records: [规则层直达 S0, UNKNOWN 基线 Event 可双空, S2 暂冻本体待派项, 对账选中 exec.walk，封住 RA 待派项；不能虚构同时在跑的上肢抓取]
+  ordering: [S0 实际范围及所有权对账先于选择取消对象, 新鲜刷新还须核对保护代际]
+  forbidden_outcomes: [凭空构造阶段, 用历史上下文取消无关执行]
+  assertions:
+  - alias: irq
+    record_type: Event
+    path: /detection/intent_status
+    equals: UNKNOWN
+    source: 协议
+    record: irq
+  - alias: fence
+    record_type: 派发记录
+    path: /状态
+    equals: 本体待派已冻结
+    source: 适配器
+    record: fence
+  - alias: ids
+    record: irq
+    source: 协议
+    record_type: Event
+    path: /interrupt/affected_execution_ids
+    equals: []
+  - alias: contexts
+    record: irq
+    source: 协议
+    record_type: Event
+    path: /detection/phase_contexts
+    equals: []
+  - alias: cancel
+    record: irq
+    source: 协议
+    record_type: Event
+    path: /interrupt/disposition
+    equals: CANCEL_AFFECTED
+  - alias: receipt
+    record: applied
+    source: 协议
+    record_type: ProtectionReceipt
+    path: /scope/resource_ids
+    equals: [L, RA]
+    compare_as: set
+  - alias: scope_source
+    record: selection
+    source: 适配器
+    record_type: 取消选择
+    path: /依据
+    equals: S0 回执实际资源与当前所有权
+  - alias: selected
+    record: selection
+    source: 适配器
+    record_type: 取消选择
+    path: /执行
+    equals: [exec.walk]
+  - alias: receipt_cause
+    source: 协议
+    record_type: ProtectionReceipt
+    record: applied
+    path: /event_ref
+    equals: event.baseline-fall-idle
+  - alias: detected
+    source: 协议
+    record_type: Event
+    record: irq
+    path: /scope/resource_ids
+    equals: [L]
+  - alias: owners
+    source: 适配器
+    record_type: 当前所有权
+    record: owners
+    path: /腿轨执行
+    equals: exec.walk
+  - alias: arm_owner
+    source: 适配器
+    record_type: 当前所有权
+    record: owners
+    path: /右臂
+    equals: S0 维持
+  - alias: outbox
+    source: 适配器
+    record_type: 取消选择
+    record: selection
+    path: /新封锁待派资源
+    equals: [RA]
+  before:
+  - first: irq
+    then: fence
+  - first: receipt
+    then: selected
+  - first: fence
+    then: selected
+  - first: owners
+    then: selected
+- given: [仿真支撑与足接触样本有效，姿态子句曾布防。, 到达物件附近并在稳定站姿下抓取]
+  when: F04b
+  expected_records: [S0 收紧, S2 收到 LOST 与 CANCEL_AFFECTED]
+  ordering: [请求 SLOW 先于覆盖丢失中断]
+  forbidden_outcomes: [把实机从未可用的足接触标为 LOST]
+  assertions:
+  - alias: slow
+    record_type: 本地保护请求
+    path: /level
+    equals: SLOW
+    source: 适配器
+    record: slow
+  - alias: irq
+    record_type: Event
+    path: /interrupt/reason_code
+    equals: monitor/clause_coverage_lost
+    source: 协议
+    record: irq
+  before:
+  - first: slow
+    then: irq
+evidence_refs:
+- vla-harness/contracts/v1/examples/monitoring-brief.locomote.json
+- vla-harness/contracts/v1/examples/event.required-clause-coverage-lost.json
+- vla-harness/contracts/v1/examples/event.baseline-fall-idle.json
+- vla-harness/contracts/v1/examples/event.baseline-fall-unknown-intent.json
+- vla-harness/contracts/v1/examples/body-profile.g1-inspire.json
+protocol_checks:
+- object: BodyProfile
+  fields: [sensors, compatible_combinations]
+  criterion: 拒绝未批准实机支撑
+- object: Event
+  fields: [detection, interrupt]
+  criterion: 基线 UNKNOWN 时按 S0 回执选范围
+- object: Execution
+  fields: [core_evidence, leases]
+  criterion: 核实腿轨与上身所有权
+verification_boundaries:
+  phases: [stand, grasp]
+  terminal_success: grasp

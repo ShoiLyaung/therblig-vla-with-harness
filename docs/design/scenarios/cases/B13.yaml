@@ -1,0 +1,101 @@
+scenario_id: B13
+revision: 草案一
+tier: B
+title: 双臂抱箱上楼
+baseline_refs:
+  root: 67c066d
+  harness: ed2eb4b
+  provider: 99b37bf
+  catalog: 0.2.0
+  body_profile: g1-inspire@3
+goal: 评估抱箱上楼的闭链负载和支撑
+success_definition: 箱体稳定且本体在平台恢复稳定支撑
+authorization:
+  status: 当前本体未授权
+  scope: 双手闭链内力、负载遮挡台阶及带载支撑
+  reason: 平地行走仿真已覆盖、实机受阻；楼梯、闭链内力与负载质心未授权；箱体遮挡向下视野，台阶深度与点云路径未核准
+  would_authorize: 验证带载楼梯组合、双手内力通路和跌倒保护
+  provenance: [DATASHEET_DECLARED, NEEDS_VALIDATION, THIRD_PARTY_MEASURED, UNCALIBRATED]
+ambiguity: 上楼的 L 是 LO；双手 H 和整体搬运的 TL 分轨
+phases:
+- id: hold
+  goal: 核验双手承载分配
+  codes: [G, H]
+  capability: 双臂抱箱（待建）
+  s0_modes: RETENTION
+  verification: 独立证据覆盖内力与载荷；手力趋势不足则 UNKNOWN
+  monitor_need: 夹持与箱体倾角
+  authorization: 当前本体未授权
+  coverage: 需要但被阻塞
+  fault_refs: []
+  authorization_note: 双手闭链内力、负载遮挡台阶及带载支撑：平地行走仿真已覆盖、实机受阻；楼梯、闭链内力与负载质心未授权；箱体遮挡向下视野，台阶深度与点云路径未核准
+- id: climb
+  goal: 带载通过台阶
+  codes: [x.locomote, TL, H]
+  capability: 带载楼梯协调技能（待建）
+  s0_modes: LOCOMOTION_TRACKING、BALANCE
+  verification: 平台定位与稳定支撑同时满足
+  monitor_need: 足滑、跌倒、闭链内力
+  authorization: 当前本体未授权
+  coverage: 需要但被阻塞
+  fault_refs: [F13]
+  authorization_note: 双手闭链内力、负载遮挡台阶及带载支撑：平地行走仿真已覆盖、实机受阻；楼梯、闭链内力与负载质心未授权；箱体遮挡向下视野，台阶深度与点云路径未核准
+faults:
+- id: F13
+  at_boundary: climb
+  injection: 支撑脚打滑，手部仍有载荷计数
+  expected_records: [仿真保护全身并记录仍保持或隔离的资源, 实机在准入处阻止]
+  ordering: [S0 真实处置先于恢复]
+  forbidden_outcomes: [仅凭双手有力即认定支撑安全]
+monitor_needs:
+- mr: MR-04
+  concern: 支撑脚打滑，手部仍有载荷计数
+  evidence: 足接触与箱体倾斜及内力证据
+  d9: generic/posture_balance@1
+  maximum: STOP_LATCHED
+- mr: MR-01
+  concern: 独立基线核验跌倒、碰撞或危险闯入
+  evidence: 合格的本体／世界证据与 S0 实际保护回执
+  d9: baseline/fall@1（其他危险依部署登记的基线硬规则）
+  maximum: STOP_LATCHED
+gap_refs: [C02, E04, E01, M01]
+coverage:
+  components:
+    Planner: 已覆盖
+    Context: 不涉及
+    Memory: 不涉及
+    ToolInterface: 已覆盖
+    Resolver: 已覆盖
+    Executor: 已覆盖
+    Verifier: 已覆盖
+    S1: 需要但被阻塞
+    S0: 需要但被阻塞
+    Monitor: 已覆盖
+    Protocol: 已覆盖
+    BodyProfile: 需要但被阻塞
+  perception:
+    头部视觉: 已覆盖
+    关节位姿: 已覆盖
+    手部轴向计数: 已覆盖
+    电流代理: 不涉及
+    深度: 需要但被阻塞
+    点云: 需要但被阻塞
+    语音: 不涉及
+    惯性: 需要但被阻塞
+    足接触: 需要但被阻塞
+    液位与溢出: 不涉及
+    材料损伤: 不涉及
+    接收者承载: 不涉及
+    柔性地标: 不涉及
+    接口就位与扭矩: 不涉及
+    可读标签: 不涉及
+    动态目标轨迹: 不涉及
+    外部载荷与张力: 需要但被阻塞
+    工作区可见范围: 需要但被阻塞
+protocol_checks:
+- object: Capability
+  fields: [body_requirements]
+  criterion: 双手载荷与步态须联审
+- object: BodyProfile
+  fields: [sensors, compatible_combinations]
+  criterion: 缺闭链工况时拒绝

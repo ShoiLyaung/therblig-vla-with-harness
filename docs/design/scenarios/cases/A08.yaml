@@ -1,0 +1,360 @@
+scenario_id: A08
+revision: 草案一
+tier: A
+title: 折叠毛巾或衣物
+baseline_refs:
+  root: 67c066d
+  harness: ed2eb4b
+  provider: 99b37bf
+  catalog: 0.2.0
+  body_profile: g1-inspire@3
+goal: 将布料折至指定轮廓并平放
+success_definition: 目标角点配对、折边关系及放置区域均符合标准 Q，双手退出后形态仍保持
+authorization:
+  status: 当前本体未授权
+  scope: 可变形物的双手协同与形态检验
+  reason: 目录可描述操作，但未发布获准的双手折叠变体及遮挡下验证标准
+  would_authorize: 建立材质与关键点标准，验证双臂组合、接触与松手后的形态证据
+  provenance: [NEEDS_VALIDATION]
+ambiguity: 携带布角移位是 TL，按当前折边地标和标准 Q 对位是 P，手的保持记 H；为后续收纳摆放才是 PP
+phases:
+- id: find
+  goal: 定位布角和目标折边
+  capability: locate_candidates
+  s0_modes: BALANCE
+  verification: 可见角点区分且观测新鲜
+  monitor_need: MR-02
+  authorization: 条件授权
+  codes: [SH, FD, ST]
+  coverage: 需要但被阻塞
+  fault_refs: []
+  authorization_note: 仅可观察可辨布角；验收所需地标配对与复核路径待验证
+- id: left
+  goal: 取得左角
+  capability: acquire_object
+  s0_modes: COMPLIANCE
+  verification: 左角随手移动
+  monitor_need: MR-05
+  authorization: 当前本体未授权
+  codes: [G]
+  coverage: 需要但被阻塞
+  fault_refs: []
+  authorization_note: 左角随手移动
+- id: right
+  goal: 取得右角
+  capability: acquire_object
+  s0_modes: COMPLIANCE
+  verification: 右角随手移动
+  monitor_need: MR-05
+  authorization: 当前本体未授权
+  codes: [G]
+  coverage: 需要但被阻塞
+  fault_refs: []
+  authorization_note: 右角随手移动
+- id: fold
+  goal: 沿折边对位并折叠
+  capability: fold_fabric
+  s0_modes: RETENTION、COMPLIANCE
+  verification: 成对地标与折边标准同时成立
+  monitor_need: MR-02
+  authorization: 当前本体未授权
+  codes: [TL, P, H]
+  coverage: 需要但被阻塞
+  fault_refs: [F08]
+  authorization_note: 成对地标与折边标准同时成立
+- id: lay
+  goal: 将折好布料平放
+  capability: place_fabric
+  s0_modes: COMPLIANCE
+  verification: 双手退出且形态仍稳定
+  monitor_need: MR-05
+  authorization: 当前本体未授权
+  codes: [PP, RL]
+  coverage: 需要但被阻塞
+  fault_refs: []
+  authorization_note: 双手退出且形态仍稳定
+- id: inspect
+  goal: 按标准核验折后状态
+  capability: measure_condition
+  s0_modes: BALANCE
+  verification: 关键点配对与区域合格
+  monitor_need: MR-02
+  authorization: 条件授权
+  codes: [I]
+  coverage: 需要但被阻塞
+  fault_refs: []
+  authorization_note: 仅检查输入质量与 UNKNOWN；遮挡下的正向形态验收仍受阻
+faults:
+- id: F08
+  at_boundary: fold
+  injection: 一角滑出视野，二维外轮廓似已对齐
+  expected_records: [S1 记录可见区和保持处置, Verifier 对隐藏角配对记 UNKNOWN]
+  ordering: [重观测布角与支撑先于提交, 必要时换图重抓]
+  forbidden_outcomes: [从矩形轮廓断言夹层平整]
+monitor_needs:
+- mr: MR-02
+  concern: 布角错配或同色重叠
+  evidence: 轮廓与可复核的布角观测
+  d9: generic/target_identity@1
+  maximum: SLOW
+- mr: MR-05
+  concern: 一侧布边脱手
+  evidence: 手物相对运动及逐手载荷
+  d9: generic/contact_force_envelope@1
+  maximum: SOFT_HOLD
+- mr: MR-01
+  concern: 独立基线核验跌倒、碰撞或危险闯入
+  evidence: 合格的本体／世界证据与 S0 实际保护回执
+  d9: baseline/fall@1（其他危险依部署登记的基线硬规则）
+  maximum: STOP_LATCHED
+gap_refs: [M04, E05, M01]
+coverage:
+  components:
+    Planner: 已覆盖
+    Context: 已覆盖
+    Memory: 已覆盖
+    ToolInterface: 已覆盖
+    Resolver: 已覆盖
+    Executor: 已覆盖
+    Verifier: 已覆盖
+    S1: 需要但被阻塞
+    S0: 已覆盖
+    Monitor: 已覆盖
+    Protocol: 已覆盖
+    BodyProfile: 需要但被阻塞
+  perception:
+    头部视觉: 已覆盖
+    关节位姿: 已覆盖
+    手部轴向计数: 已覆盖
+    电流代理: 不涉及
+    深度: 不涉及
+    点云: 不涉及
+    语音: 不涉及
+    惯性: 不涉及
+    足接触: 不涉及
+    液位与溢出: 不涉及
+    材料损伤: 不涉及
+    接收者承载: 不涉及
+    柔性地标: 需要但被阻塞
+    接口就位与扭矩: 不涉及
+    可读标签: 不涉及
+    动态目标轨迹: 不涉及
+    外部载荷与张力: 不涉及
+    工作区可见范围: 不涉及
+extends_walkthrough: 独立用例
+dag:
+  nodes:
+  - id: find
+    phase: find
+    gate: 折叠目标、布料实例与地标标准已绑定
+    composition: ATOMIC
+    depends_on: []
+    parallel_group: 无
+    parent: 无
+  - id: left
+    phase: left
+    gate: 左角可见且双臂取角组合批准
+    composition: ATOMIC
+    depends_on: [find]
+    parallel_group: 取两角
+    parent: 无
+  - id: right
+    phase: right
+    gate: 右角可见且双臂取角组合批准
+    composition: ATOMIC
+    depends_on: [find]
+    parallel_group: 取两角
+    parent: 无
+  - id: fold
+    phase: fold
+    gate: 两角已证实受控、协调变体与避碰条件获准
+    composition: PROVIDER_COMPOSITE
+    depends_on: [left, right]
+    parallel_group: 无
+    parent: 无
+  - id: lay
+    phase: lay
+    gate: 折边验证通过且支撑面可见
+    composition: PROVIDER_COMPOSITE
+    depends_on: [fold]
+    parallel_group: 无
+    parent: 无
+  - id: inspect
+    phase: inspect
+    gate: 双手已安全退出，折后观测与标准匹配
+    composition: ATOMIC
+    depends_on: [lay]
+    parallel_group: 无
+    parent: 无
+  replan_trigger: 布角失配或松手后反弹则从新观测展开新修订
+capabilities:
+- name: locate_candidates
+  status: 目录模板
+  reference: therblig-vla/therbligs/catalog.v0.yaml
+  requirements: 入口：折叠目标、布料实例与地标标准已绑定。退出检查：可见角点区分且观测新鲜
+- name: acquire_object
+  status: 已有卡
+  reference: vla-harness/contracts/v1/examples/capability.acquire-object.json
+  requirements: 入口：左角可见且双臂取角组合批准。退出检查：左角随手移动；入口：右角可见且双臂取角组合批准。退出检查：右角随手移动
+- name: fold_fabric
+  status: 需新建
+  reference: 待发布
+  requirements: 入口：两角已证实受控、协调变体与避碰条件获准。退出检查：成对地标与折边标准同时成立
+- name: place_fabric
+  status: 需新建
+  reference: 待发布
+  requirements: 入口：折边验证通过且支撑面可见。退出检查：双手退出且形态仍稳定
+- name: measure_condition
+  status: 目录模板
+  reference: therblig-vla/therbligs/catalog.v0.yaml
+  requirements: 入口：双手已安全退出，折后观测与标准匹配。退出检查：关键点配对与区域合格
+simo:
+- phase: find
+  lanes:
+    E: {label: SH/FD@t, owner: S1, access: OBSERVE, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    S2: {label: ST, owner: S2, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    MON: {label: 基线, owner: MON, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    LA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    LH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    W: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    L: {label: 平衡, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+- phase: left
+  lanes:
+    E: {label: 观察, owner: S1, access: OBSERVE, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    S2: {label: 任务记录, owner: S2, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    MON: {label: 基线, owner: MON, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    LA: {label: G, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    RA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    LH: {label: G, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    RH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    W: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    L: {label: 平衡, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+- phase: right
+  lanes:
+    E: {label: 观察, owner: S1, access: OBSERVE, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    S2: {label: 任务记录, owner: S2, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    MON: {label: 基线, owner: MON, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    LA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RA: {label: G, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    LH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RH: {label: G, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    W: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    L: {label: 平衡, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+- phase: fold
+  lanes:
+    E: {label: 观察, owner: S1, access: OBSERVE, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    S2: {label: 任务记录, owner: S2, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    MON: {label: 基线, owner: MON, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    LA: {label: TL/P, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    RA: {label: TL/P, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    LH: {label: H, owner: S0, access: DEPEND, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RH: {label: H, owner: S0, access: DEPEND, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    W: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    L: {label: 平衡, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+- phase: lay
+  lanes:
+    E: {label: 观察, owner: S1, access: OBSERVE, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    S2: {label: 任务记录, owner: S2, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    MON: {label: 基线, owner: MON, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    LA: {label: PP, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    RA: {label: PP, owner: S1, access: DRIVE, observation_mask: 按新鲜有效通道, action_mask: 仅已授权轴, missing_mask: 无效或饱和通道屏蔽}
+    LH: {label: RL, owner: S1, access: TAKEOVER, observation_mask: 按新鲜有效通道, action_mask: 接管后授权轴, missing_mask: 无效或饱和通道屏蔽}
+    RH: {label: RL, owner: S1, access: TAKEOVER, observation_mask: 按新鲜有效通道, action_mask: 接管后授权轴, missing_mask: 无效或饱和通道屏蔽}
+    W: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    L: {label: 平衡, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+- phase: inspect
+  lanes:
+    E: {label: 观察, owner: S1, access: OBSERVE, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    S2: {label: I, owner: S2, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    MON: {label: 基线, owner: MON, access: RECORD, observation_mask: 证据引用, action_mask: 屏蔽, missing_mask: 记录缺失来源}
+    LA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RA: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    LH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    RH: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    W: {label: 稳定, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+    L: {label: 平衡, owner: S0, access: MAINTAINED, observation_mask: 按新鲜有效通道, action_mask: 屏蔽, missing_mask: 无效或饱和通道屏蔽}
+occupancy:
+- phase: find
+  resources: E:OBSERVE、L:MAINTAINED
+  combination: 纯观察
+  handoff: 记录布料实例及地标对应
+- phase: left
+  resources: E:OBSERVE、LA:DRIVE、LH:DRIVE、L:MAINTAINED
+  combination: 需批准柔性双臂工况
+  handoff: 左手转保持
+- phase: right
+  resources: E:OBSERVE、RA:DRIVE、RH:DRIVE、L:MAINTAINED
+  combination: 需批准柔性双臂工况
+  handoff: 右手转保持
+- phase: fold
+  resources: E:OBSERVE、LA:DRIVE、RA:DRIVE、LH:DEPEND、RH:DEPEND、L:MAINTAINED
+  combination: 需双臂协调变体
+  handoff: 保留两侧保持至稳定支撑
+- phase: lay
+  resources: E:OBSERVE、LA:DRIVE、RA:DRIVE、LH:TAKEOVER、RH:TAKEOVER、L:MAINTAINED
+  combination: 双手退出须独立批准
+  handoff: 确认台面支撑后同步协调放手
+- phase: inspect
+  resources: E:OBSERVE、L:MAINTAINED
+  combination: 纯观察
+  handoff: 保留缺失地标标记
+checkpoints:
+- phase: fold
+  SUCCESS: 目标角配对与折边拓扑可见且合格
+  FAILED: 明确配错角或折向相反
+  UNKNOWN: 外轮廓正确但隐藏角不可见
+  recovery: 局部取证或重抓，保留先前未知
+- phase: inspect
+  SUCCESS: 松手后地标与轮廓仍符合 Q
+  FAILED: 松手后明显展开或偏出区域
+  UNKNOWN: 遮挡或材质纹理不足以区分布层
+  recovery: 换视角或请求人工核验
+context: [记录布角持久身份、正反面、折线和目标区域, 折叠后旧位置失效]
+memory: [存档折前后观测、可见区和地标对应，区分观测与仿真真值]
+training:
+  labels: [SH, FD, ST, G, TL, P, H, PP, RL, I]
+  masks: [E 与 MON 无动作目标, 按实际 grant 展开轴，观测缺失另设掩码]
+  simulation: 用布网格真值评分，给策略的只有可观测输入
+  teleoperation: 采集真实褶皱、材质差异及遮挡下的 UNKNOWN 标注
+  cross_embodiment: 迁移地标关系和粗略臂段，不迁移仿真接触或另一种布料的张力阈值
+test_vectors:
+- given: [布角已部分折合；标准 Q 要求核实成对角点。, 将布料折至指定轮廓并平放]
+  when: F08
+  expected_records: [S1 记录可见区和保持处置, Verifier 对隐藏角配对记 UNKNOWN]
+  ordering: [重观测布角与支撑先于提交, 必要时换图重抓]
+  forbidden_outcomes: [从矩形轮廓断言夹层平整]
+  assertions:
+  - alias: corner
+    record_type: 地标观测
+    path: /隐藏角
+    equals: 不可见
+    source: 适配器
+    record: corner
+  - alias: check
+    record_type: Verification
+    path: /verdict
+    equals: UNKNOWN
+    source: 协议
+    record: check
+  before:
+  - first: corner
+    then: check
+evidence_refs:
+- vla-harness/contracts/v1/examples/capability.acquire-object.json
+- vla-harness/contracts/v1/examples/verification.unknown-occluded.json
+- vla-harness/contracts/v1/examples/body-profile.g1-inspire.json
+protocol_checks:
+- object: Invocation
+  fields: [targets, observation_refs]
+  criterion: 地标可见性绑定观测
+- object: Result
+  fields: [outputs, evidence]
+  criterion: 保留可见轮廓与遮挡区
+- object: Verification
+  fields: [verdict, supersedes]
+  criterion: 补证后新增结论
+verification_boundaries:
+  phases: [fold, inspect]
+  terminal_success: inspect
