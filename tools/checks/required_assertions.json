@@ -1,0 +1,558 @@
+{
+  "F01": [
+    {
+      "record": "lookup_read",
+      "source": "协议",
+      "record_type": "InvocationLookup",
+      "path": "/status",
+      "equals": "ADMITTED"
+    },
+    {
+      "record": "execution_read",
+      "source": "协议",
+      "record_type": "Execution",
+      "path": "/state",
+      "equals": "RUNNING"
+    }
+  ],
+  "F01b": [
+    {
+      "record": "req",
+      "source": "适配器",
+      "record_type": "本地保护请求",
+      "path": "/level",
+      "equals": "SOFT_HOLD"
+    },
+    {
+      "record": "req",
+      "source": "适配器",
+      "record_type": "本地保护请求",
+      "path": "/event_ref",
+      "equals": "event.required-clause-unarmed-grace-expired"
+    },
+    {
+      "record": "req",
+      "source": "适配器",
+      "record_type": "本地保护请求",
+      "path": "/protection_id",
+      "equals": "protect.required-clause-unarmed-grace-expired"
+    },
+    {
+      "record": "irq",
+      "source": "协议",
+      "record_type": "Event",
+      "path": "/event_id",
+      "equals": "event.required-clause-unarmed-grace-expired"
+    },
+    {
+      "record": "irq",
+      "source": "协议",
+      "record_type": "Event",
+      "path": "/protection_ref",
+      "equals": "protect.required-clause-unarmed-grace-expired"
+    },
+    {
+      "record": "irq",
+      "source": "协议",
+      "record_type": "Event",
+      "path": "/interrupt/disposition",
+      "equals": "CANCEL_AFFECTED"
+    },
+    {
+      "record": "irq",
+      "source": "协议",
+      "record_type": "Event",
+      "path": "/detection/clause_failures/0/failure",
+      "equals": "GRACE_EXPIRED"
+    },
+    {
+      "record": "irq",
+      "source": "协议",
+      "record_type": "Event",
+      "path": "/detection/clause_failures/0/clause_id",
+      "equals": "contact_force_envelope"
+    },
+    {
+      "record": "spent",
+      "source": "适配器",
+      "record_type": "重试预算",
+      "path": "/同条件",
+      "equals": "已耗尽"
+    },
+    {
+      "record": "deny",
+      "source": "适配器",
+      "record_type": "派发记录",
+      "path": "/同条件新调用",
+      "equals": "未派发"
+    },
+    {
+      "record": "changed",
+      "source": "适配器",
+      "record_type": "证据复测",
+      "path": "/工况",
+      "equals": "变化已核实"
+    },
+    {
+      "record": "replan",
+      "source": "适配器",
+      "record_type": "新尝试",
+      "path": "/入口",
+      "equals": "变化条件已对账"
+    },
+    {
+      "source": "协议",
+      "record_type": "ProtectionReceipt",
+      "record": "applied",
+      "path": "/event_ref",
+      "equals": "event.required-clause-unarmed-grace-expired"
+    },
+    {
+      "source": "协议",
+      "record_type": "ProtectionReceipt",
+      "record": "applied",
+      "path": "/protection_id",
+      "equals": "protect.required-clause-unarmed-grace-expired"
+    }
+  ],
+  "F02a": [
+    {
+      "record_type": "用户输入",
+      "path": "/意图状态",
+      "equals": "已确认",
+      "source": "适配器",
+      "record": "confirmed"
+    },
+    {
+      "record_type": "检查点",
+      "path": "/恢复状态",
+      "equals": "允许新修订派发",
+      "source": "适配器",
+      "record": "resume"
+    }
+  ],
+  "F02b": [
+    {
+      "record": "fault",
+      "source": "协议",
+      "record_type": "Execution",
+      "path": "/state",
+      "equals": "FAILED"
+    },
+    {
+      "record": "fault",
+      "source": "协议",
+      "record_type": "Execution",
+      "path": "/cancel/state",
+      "equals": "ACCEPTED"
+    },
+    {
+      "record": "fault",
+      "source": "协议",
+      "record_type": "Execution",
+      "path": "/result/evidence/controller_summary/stable",
+      "equals": false
+    },
+    {
+      "record": "fault",
+      "source": "协议",
+      "record_type": "Execution",
+      "path": "/resource_id",
+      "equals": "RH",
+      "select": {
+        "array_path": "/result/resource_dispositions",
+        "resource_id": "RH"
+      }
+    },
+    {
+      "record": "fault",
+      "source": "协议",
+      "record_type": "Execution",
+      "path": "/disposition",
+      "equals": "QUARANTINED",
+      "select": {
+        "array_path": "/result/resource_dispositions",
+        "resource_id": "RH"
+      }
+    },
+    {
+      "record": "fence",
+      "source": "适配器",
+      "record_type": "资源对账",
+      "path": "/处置",
+      "equals": "仍隔离"
+    },
+    {
+      "record": "cleared",
+      "source": "适配器",
+      "record_type": "恢复核验",
+      "path": "/依据",
+      "equals": "匹配原故障和资源的 S0 恢复凭据"
+    },
+    {
+      "record": "reuse",
+      "source": "适配器",
+      "record_type": "再准入",
+      "path": "/资源",
+      "equals": "RH"
+    },
+    {
+      "source": "适配器",
+      "record_type": "本地停止账本",
+      "record": "s0_stop",
+      "path": "/RH处置",
+      "equals": "未结清，隔离"
+    }
+  ],
+  "F02c": [
+    {
+      "record_type": "本地离线审计",
+      "path": "/旧快照",
+      "equals": "启动围栏丢弃",
+      "source": "适配器",
+      "record": "drop"
+    },
+    {
+      "record_type": "本地离线审计",
+      "path": "/蓝杯阶段",
+      "equals": "新实例按首发安装",
+      "source": "适配器",
+      "record": "fresh"
+    }
+  ],
+  "F03": [
+    {
+      "record_type": "本地保护请求",
+      "path": "/level",
+      "equals": "SOFT_HOLD",
+      "source": "适配器",
+      "record": "hold"
+    },
+    {
+      "record_type": "Event",
+      "path": "/interrupt/reason_code",
+      "equals": "monitor/required_clause_unarmed",
+      "source": "协议",
+      "record": "irq"
+    },
+    {
+      "record": "irq",
+      "source": "协议",
+      "record_type": "Event",
+      "path": "/interrupt/disposition",
+      "equals": "CANCEL_AFFECTED"
+    },
+    {
+      "record": "irq",
+      "source": "协议",
+      "record_type": "Event",
+      "path": "/interrupt/affected_execution_ids",
+      "equals": []
+    },
+    {
+      "record": "irq",
+      "source": "协议",
+      "record_type": "Event",
+      "path": "/detection/phase_contexts/0/plan_node_id",
+      "equals": "node.join"
+    },
+    {
+      "record": "irq",
+      "source": "协议",
+      "record_type": "Event",
+      "path": "/detection/clause_failures/0/brief_id",
+      "equals": "brief.barrier"
+    },
+    {
+      "record": "irq",
+      "source": "协议",
+      "record_type": "Event",
+      "path": "/detection/clause_failures/0/clause_id",
+      "equals": "right_retention"
+    },
+    {
+      "record": "irq",
+      "source": "协议",
+      "record_type": "Event",
+      "path": "/detection/clause_failures/0/missing_stream_refs",
+      "equals": [
+        "right.hand.force"
+      ]
+    },
+    {
+      "record": "irq",
+      "source": "协议",
+      "record_type": "Event",
+      "path": "/scope/resource_ids",
+      "equals": [
+        "RH"
+      ]
+    },
+    {
+      "source": "协议",
+      "record_type": "Event",
+      "record": "irq",
+      "path": "/detection/phase_contexts/0/brief_id",
+      "equals": "brief.barrier"
+    },
+    {
+      "source": "协议",
+      "record_type": "Event",
+      "record": "irq",
+      "path": "/detection/phase_contexts/0/clause_ids",
+      "equals": [
+        "right_retention"
+      ]
+    },
+    {
+      "source": "协议",
+      "record_type": "Event",
+      "record": "irq",
+      "path": "/detection/clause_failures/0/failure",
+      "equals": "GRACE_EXPIRED"
+    }
+  ],
+  "F04a": [
+    {
+      "record_type": "Event",
+      "path": "/detection/intent_status",
+      "equals": "UNKNOWN",
+      "source": "协议",
+      "record": "irq"
+    },
+    {
+      "record_type": "派发记录",
+      "path": "/状态",
+      "equals": "本体待派已冻结",
+      "source": "适配器",
+      "record": "fence"
+    },
+    {
+      "record": "irq",
+      "source": "协议",
+      "record_type": "Event",
+      "path": "/interrupt/affected_execution_ids",
+      "equals": []
+    },
+    {
+      "record": "irq",
+      "source": "协议",
+      "record_type": "Event",
+      "path": "/detection/phase_contexts",
+      "equals": []
+    },
+    {
+      "record": "irq",
+      "source": "协议",
+      "record_type": "Event",
+      "path": "/interrupt/disposition",
+      "equals": "CANCEL_AFFECTED"
+    },
+    {
+      "record": "applied",
+      "source": "协议",
+      "record_type": "ProtectionReceipt",
+      "path": "/scope/resource_ids",
+      "equals": [
+        "L",
+        "RA"
+      ],
+      "compare_as": "set"
+    },
+    {
+      "record": "selection",
+      "source": "适配器",
+      "record_type": "取消选择",
+      "path": "/依据",
+      "equals": "S0 回执实际资源与当前所有权"
+    },
+    {
+      "record": "selection",
+      "source": "适配器",
+      "record_type": "取消选择",
+      "path": "/执行",
+      "equals": [
+        "exec.walk"
+      ]
+    },
+    {
+      "source": "协议",
+      "record_type": "ProtectionReceipt",
+      "record": "applied",
+      "path": "/event_ref",
+      "equals": "event.baseline-fall-idle"
+    },
+    {
+      "source": "协议",
+      "record_type": "Event",
+      "record": "irq",
+      "path": "/scope/resource_ids",
+      "equals": [
+        "L"
+      ]
+    },
+    {
+      "source": "适配器",
+      "record_type": "当前所有权",
+      "record": "owners",
+      "path": "/腿轨执行",
+      "equals": "exec.walk"
+    },
+    {
+      "source": "适配器",
+      "record_type": "当前所有权",
+      "record": "owners",
+      "path": "/右臂",
+      "equals": "S0 维持"
+    },
+    {
+      "source": "适配器",
+      "record_type": "取消选择",
+      "record": "selection",
+      "path": "/新封锁待派资源",
+      "equals": [
+        "RA"
+      ]
+    }
+  ],
+  "F04b": [
+    {
+      "record_type": "本地保护请求",
+      "path": "/level",
+      "equals": "SLOW",
+      "source": "适配器",
+      "record": "slow"
+    },
+    {
+      "record_type": "Event",
+      "path": "/interrupt/reason_code",
+      "equals": "monitor/clause_coverage_lost",
+      "source": "协议",
+      "record": "irq"
+    }
+  ],
+  "F05": [
+    {
+      "record_type": "观测质量",
+      "path": "/液面",
+      "equals": "遮挡",
+      "source": "适配器",
+      "record": "level"
+    },
+    {
+      "record_type": "Verification",
+      "path": "/predicates/0/value",
+      "equals": "UNKNOWN",
+      "source": "协议",
+      "record": "check"
+    },
+    {
+      "source": "协议",
+      "record_type": "Verification",
+      "record": "check",
+      "path": "/predicates/0/predicate/id",
+      "equals": "generic/target_level@1"
+    }
+  ],
+  "F05b": [
+    {
+      "source": "适配器",
+      "record": "tray",
+      "record_type": "托盘观测",
+      "path": "/越界",
+      "equals": "已证实"
+    },
+    {
+      "source": "协议",
+      "record_type": "Verification",
+      "record": "check",
+      "path": "/predicates/0/value",
+      "equals": "UNKNOWN"
+    },
+    {
+      "source": "协议",
+      "record_type": "Verification",
+      "record": "check",
+      "path": "/predicates/1/value",
+      "equals": "FALSE"
+    },
+    {
+      "source": "协议",
+      "record_type": "Verification",
+      "record": "check",
+      "path": "/checks/effect_holds",
+      "equals": "FALSE"
+    },
+    {
+      "source": "协议",
+      "record_type": "Verification",
+      "record": "check",
+      "path": "/verdict",
+      "equals": "FAILED"
+    }
+  ],
+  "F06a": [
+    {
+      "record_type": "证据批准",
+      "path": "/适用性",
+      "equals": "无匹配通道批准",
+      "source": "适配器",
+      "record": "metric"
+    },
+    {
+      "record_type": "解析记录",
+      "path": "/状态",
+      "equals": "阻塞",
+      "source": "适配器",
+      "record": "gate"
+    }
+  ],
+  "F06b": [
+    {
+      "record_type": "观测质量",
+      "path": "/材料可见性",
+      "equals": "背面遮挡",
+      "source": "适配器",
+      "record": "mask"
+    },
+    {
+      "record_type": "Verification",
+      "path": "/verdict",
+      "equals": "UNKNOWN",
+      "source": "协议",
+      "record": "check"
+    }
+  ],
+  "F07": [
+    {
+      "record_type": "承接观测",
+      "path": "/接收手",
+      "equals": "已撤离",
+      "source": "适配器",
+      "record": "withdrawn"
+    },
+    {
+      "record_type": "释放守卫",
+      "path": "/结论",
+      "equals": "维持握持",
+      "source": "适配器",
+      "record": "gate"
+    }
+  ],
+  "F08": [
+    {
+      "record_type": "地标观测",
+      "path": "/隐藏角",
+      "equals": "不可见",
+      "source": "适配器",
+      "record": "corner"
+    },
+    {
+      "record_type": "Verification",
+      "path": "/verdict",
+      "equals": "UNKNOWN",
+      "source": "协议",
+      "record": "check"
+    }
+  ]
+}
